@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_screen.dart'; // 👈 make sure ye import ho
 
 class SignupScreen extends StatelessWidget {
   @override
@@ -6,29 +7,28 @@ class SignupScreen extends StatelessWidget {
     return Scaffold(
       body: Container(
         color: Color(0xFFF5F5F5), // Off-white background color
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start, // Align to start (left) for "LoveBox"
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 40.0, left: 0),
-                child: Text(
-                  'LoveBox',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFF83758),
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // LoveBox ab direct left edge se aligned
+            Padding(
+              padding: const EdgeInsets.only(top: 70),
+              child: Text(
+                'LoveBox',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFF83758),
                 ),
               ),
+            ),
 
-              SizedBox(
-                height: 15,
-              ), // Space between LoveBox and Create an account
+            SizedBox(height: 10),
 
-              Expanded(
+            // Form section ke liye padding
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -212,31 +212,46 @@ class SignupScreen extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 20),
-                      RichText(
-                        text: TextSpan(
-                          text: 'I Already Have an Account ',
-                          style: TextStyle(
-                            color: Color(0xFF575757),
-                            fontSize: 16,
+                      // 👇 Login clickable with underline red ✅
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "I Already Have an Account ",
+                            style: TextStyle(
+                              color: Color(0xFF575757),
+                              fontSize: 16,
+                            ),
                           ),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: 'Login',
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LoginScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "Login",
                               style: TextStyle(
                                 color: Color(0xFFF83758),
-                                decoration: TextDecoration.underline,
                                 fontSize: 16,
+                                decoration: TextDecoration.underline,
+                                decorationColor: Color(
+                                  0xFFF83758,
+                                ), // 👈 underline bhi red
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
