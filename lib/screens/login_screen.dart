@@ -1,14 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:lovebox/constants/api_endpoints.dart';
-import 'package:lovebox/screens/signup_screen.dart';
 import 'package:lovebox/screens/home_screen.dart';
+import 'package:lovebox/screens/signup_screen.dart';
 import 'package:lovebox/services/local_storage.dart';
 import 'package:lovebox/models/user_model.dart';
-import 'package:http/http.dart' as http;
 import 'package:lovebox/utils/snackbar_helper.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -31,34 +33,58 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final response = await http.post(
         Uri.parse(ApiEndpoints.login),
-        body: {
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
-        },
+        }),
       );
 
-      final data = jsonDecode(response.body);
+      if (response.body.isEmpty) {
+        SnackbarHelper.showError(context, "Empty response from server");
+        setState(() => _isLoading = false);
+        return;
+      }
 
-      if (response.statusCode == 200 && data['status'] == true) {
-        // User data
-        final user = UserModel.fromJson(data['user']);
+      final data = jsonDecode(response.body);
+      print("Login response: $data"); // 🔎 Debugging
+
+      // ✅ Fix: Check "token" + "user" instead of "success"
+      if (response.statusCode == 200 &&
+          data['token'] != null &&
+          data['user'] != null) {
+        final user = UserModel.fromJson({
+          ...data['user'],
+          "token": data['token'], // ✅ Add token into user object
+        });
+
         await LocalStorage.saveUser(user.id, user.name, user.email, user.token);
 
-        SnackbarHelper.showSuccess(context, "Login successful");
-
         if (!mounted) return;
-        Navigator.pushReplacement(
+
+        SnackbarHelper.showSuccess(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          data['message'] ?? "Login successful",
+        );
+
+        // ✅ Proper navigation to HomeScreen
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (Route<dynamic> route) => false,
         );
       } else {
         String errorMessage = "Login failed";
         if (data['errors'] != null) {
-          errorMessage = data['errors'].values.first[0];
+          final errors = data['errors'] as Map<String, dynamic>;
+          final firstError = errors.values.first;
+          if (firstError is List && firstError.isNotEmpty) {
+            errorMessage = firstError[0];
+          } else {
+            errorMessage = firstError.toString();
+          }
         } else if (data['message'] != null) {
           errorMessage = data['message'];
         }
-
         SnackbarHelper.showError(context, errorMessage);
       }
     } catch (e) {
@@ -93,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Email field
+                // Email
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -136,7 +162,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Forgot Password
                 Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
@@ -156,9 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: const Color(
-                        0xFFF83758,
-                      ), // ✅ Keep pink while loading
+                      color: const Color(0xFFF83758),
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                     child: Center(
@@ -171,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Login',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Color(0xFFFFFFFF),
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -189,21 +212,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _socialButton(
-                      image: 'assets/images/search.png',
-                      onTap: () {},
-                    ),
+                    _socialButton(image: 'assets/images/search.png'),
                     const SizedBox(width: 12),
-                    _socialButton(
-                      icon: Icons.apple,
-                      color: Color(0xFF000000),
-                      onTap: () {},
-                    ),
+                    _socialButton(icon: Icons.apple, color: Color(0xFF000000)),
                     const SizedBox(width: 12),
                     _socialButton(
                       icon: Icons.facebook,
                       color: Color(0xFF3D4DA6),
-                      onTap: () {},
                     ),
                   ],
                 ),
@@ -246,12 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _socialButton({
-    String? image,
-    IconData? icon,
-    Color? color,
-    VoidCallback? onTap,
-  }) {
+  Widget _socialButton({String? image, IconData? icon, Color? color}) {
     return Container(
       width: 50,
       height: 50,
@@ -265,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
             image != null
                 ? Image.asset(image, height: 30)
                 : Icon(icon, color: color, size: 30),
-        onPressed: onTap,
+        onPressed: () {},
         padding: EdgeInsets.zero,
       ),
     );
