@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import 'product_detail_screen.dart'; // ✅ Add this import
+import 'product_detail_screen.dart';
+import '../services/local_storage.dart';
+import '../constants/color.dart';
+import '../constants/strings.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -52,7 +55,7 @@ class HomeScreen extends StatelessWidget {
         "name": "Flower Bouquet",
         "price": "\$18",
         "image":
-            "https://preview.redd.it/more-bouquet-photos-v0-vdhjk7sto2bc1.jpg?width=1080&crop=smart&auto=webp&s=cb97635a23cd2558d4c1a1cea40b6adc66277723",
+            "https://media.istockphoto.com/id/2164207000/photo/summer-bouquet-beautiful-multi-colored-fresh-flower-arrangement-birthday-bouquet-made-of.jpg?s=612x612&w=0&k=20&c=7lLUdkx91ZDl-Lw801VIbE6IywD6ULH4B09ZiwoulfQ=",
         "description":
             "Fresh and vibrant flower bouquet, hand-picked to bring smiles and happiness.",
       },
@@ -60,41 +63,104 @@ class HomeScreen extends StatelessWidget {
         "name": "Luxury Watch",
         "price": "\$120",
         "image":
-            "https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "https://currenwatches.com.pk/cdn/shop/products/S7d2e9b2df5eb48be959dad1f4655b5e5S.jpg?v=1740468359&width=1445",
         "description":
             "A luxury wristwatch crafted with elegance and precision – perfect for gifting.",
       },
       {
-        "name": "Couple Mug Set",
+        "name": "Couple Mug",
         "price": "\$12",
         "image":
-            "https://rlv.zcache.com/forever_love_heart_pink_floral_custom_coffee_mug_set-rd31c80541708491fa178f21939c7f9c8_za2dq_1024.jpg?rlvnet=1&max_dim=325",
+            "https://onlinegiftshop.pk/wp-content/uploads/2023/08/WhatsApp-Image-2023-08-01-at-1.54.54-PM.jpeg",
         "description":
             "Custom couple mug set with romantic design – share your morning coffee with love.",
       },
     ];
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          "LoveBox",
-          style: TextStyle(
+        title: Text(
+          AppStrings.appName,
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFFF83758),
+            color: AppColors.primary,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFFF83758)),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (Route<dynamic> route) => false,
+            icon: const Icon(Icons.logout, color: AppColors.primary),
+            onPressed: () async {
+              bool? shouldLogout = await showDialog(
+                context: context,
+                builder: (context) => Dialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  backgroundColor: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          AppStrings.logoutConfirm,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith<Color>(
+                                  (states) => states.contains(MaterialState.pressed)
+                                      ? AppColors.primary
+                                      : Colors.grey,
+                                ),
+                              ),
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text(AppStrings.no,
+                                  style: TextStyle(color: Colors.black)),
+                            ),
+                            ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith<Color>(
+                                  (states) => states.contains(MaterialState.pressed)
+                                      ? AppColors.primary
+                                      : Colors.grey,
+                                ),
+                              ),
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text(AppStrings.yes,
+                                  style: TextStyle(color: Colors.black)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               );
+
+              if (shouldLogout == true) {
+                await LocalStorage.clearUser();
+                if (!context.mounted) return;
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (Route<dynamic> route) => false,
+                );
+              }
             },
           ),
         ],
@@ -103,16 +169,16 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // 🔍 Search Bar
+            // Search Bar
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
+                color: AppColors.inputFill,
                 borderRadius: BorderRadius.circular(12),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: const TextField(
                 decoration: InputDecoration(
-                  hintText: "Search products...",
+                  hintText: AppStrings.searchHint,
                   border: InputBorder.none,
                   icon: Icon(Icons.search, color: Colors.grey),
                 ),
@@ -120,7 +186,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // 🛍️ Product Grid
+            // Product Grid
             Expanded(
               child: GridView.builder(
                 itemCount: products.length,
@@ -137,8 +203,8 @@ class HomeScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ProductDetailScreen(product: product),
-                        ),
+                            builder: (_) =>
+                                ProductDetailScreen(product: product)),
                       );
                     },
                     child: Card(
@@ -152,8 +218,7 @@ class HomeScreen extends StatelessWidget {
                           Expanded(
                             child: ClipRRect(
                               borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(16),
-                              ),
+                                  top: Radius.circular(16)),
                               child: Image.network(
                                 product["image"],
                                 width: double.infinity,
@@ -161,11 +226,8 @@ class HomeScreen extends StatelessWidget {
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
                                     color: Colors.grey[200],
-                                    child: const Icon(
-                                      Icons.broken_image,
-                                      size: 50,
-                                      color: Colors.grey,
-                                    ),
+                                    child: const Icon(Icons.broken_image,
+                                        size: 50, color: Colors.grey),
                                   );
                                 },
                               ),
@@ -176,21 +238,14 @@ class HomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  product["name"],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
+                                Text(product["name"],
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16)),
                                 const SizedBox(height: 4),
-                                Text(
-                                  product["price"],
-                                  style: const TextStyle(
-                                    color: Color(0xFFF83758),
-                                    fontSize: 14,
-                                  ),
-                                ),
+                                Text(product["price"],
+                                    style: const TextStyle(
+                                        color: AppColors.primary, fontSize: 14)),
                               ],
                             ),
                           ),

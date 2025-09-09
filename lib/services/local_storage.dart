@@ -1,46 +1,32 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalStorage {
-  static const _idKey = 'user_id';
-  static const _nameKey = 'user_name';
-  static const _emailKey = 'user_email';
-  static const _tokenKey = 'user_token';
-  static const _firstTimeKey = 'first_time';
-
+  // Save user
   static Future<void> saveUser(String id, String name, String email, String token) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_idKey, id);
-    await prefs.setString(_nameKey, name);
-    await prefs.setString(_emailKey, email);
-    await prefs.setString(_tokenKey, token);
-    await prefs.setBool(_firstTimeKey, false);
+    await prefs.setString('id', id);
+    await prefs.setString('name', name);
+    await prefs.setString('email', email);
+    await prefs.setString('token', token);
   }
 
-  static Future<Map<String, String?>> getUser() async {
+  // Get user
+  static Future<Map<String, String>> getUser() async {
     final prefs = await SharedPreferences.getInstance();
     return {
-      "id": prefs.getString(_idKey),
-      "name": prefs.getString(_nameKey),
-      "email": prefs.getString(_emailKey),
-      "token": prefs.getString(_tokenKey),
+      'id': prefs.getString('id') ?? '',
+      'name': prefs.getString('name') ?? '',
+      'email': prefs.getString('email') ?? '',
+      'token': prefs.getString('token') ?? '',
     };
   }
 
+  // Clear user
   static Future<void> clearUser() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_idKey);
-    await prefs.remove(_nameKey);
-    await prefs.remove(_emailKey);
-    await prefs.remove(_tokenKey);
-  }
-
-  static Future<bool> isFirstTime() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_firstTimeKey) ?? true;
-  }
-
-  static Future<void> setFirstTimeFalse() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_firstTimeKey, false);
+    await prefs.remove('id');
+    await prefs.remove('name');
+    await prefs.remove('email');
+    await prefs.remove('token');
   }
 }

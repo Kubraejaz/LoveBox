@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:lovebox/utils/snackbar_helper.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../utils/snackbar_helper.dart';
 import 'login_screen.dart';
+import '../constants/color.dart';
+import '../constants/strings.dart';
 
 class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
@@ -21,22 +25,22 @@ class _SignupScreenState extends State<SignupScreen> {
 
     return Scaffold(
       body: Container(
-        color: Color(0xFFF5F5F5),
+        color: AppColors.background,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 70),
               child: Text(
-                'LoveBox',
-                style: TextStyle(
+                AppStrings.appName,
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFF83758),
+                  color: AppColors.primary,
                 ),
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -44,110 +48,114 @@ class _SignupScreenState extends State<SignupScreen> {
                   child: Form(
                     key: _formKey,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Create an account',
-                          style: TextStyle(
+                          AppStrings.createAccount,
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF000000),
+                            color: AppColors.textDark,
                           ),
                         ),
-                        SizedBox(height: 25),
+                        const SizedBox(height: 25),
                         // Username
                         TextFormField(
                           controller: _nameController,
                           decoration: InputDecoration(
-                            labelText: 'Username',
-                            prefixIcon: Icon(
+                            labelText: AppStrings.username,
+                            prefixIcon: const Icon(
                               Icons.person,
-                              color: Color(0xFF676767),
+                              color: AppColors.textGrey,
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10.0),
                             ),
-                            labelStyle: TextStyle(color: Color(0xFF676767)),
+                            labelStyle: const TextStyle(
+                              color: AppColors.textGrey,
+                            ),
                             filled: true,
-                            fillColor: Color(0xFFF3F3F3),
+                            fillColor: AppColors.inputFill,
                           ),
                           validator:
                               (val) =>
                                   val == null || val.isEmpty
-                                      ? "Enter username"
+                                      ? AppStrings.usernameValidator
                                       : null,
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         // Email
                         TextFormField(
                           controller: _emailController,
                           decoration: InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(
+                            labelText: AppStrings.email,
+                            prefixIcon: const Icon(
                               Icons.email,
-                              color: Color(0xFF676767),
+                              color: AppColors.textGrey,
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10.0),
                             ),
-                            labelStyle: TextStyle(color: Color(0xFF676767)),
+                            labelStyle: const TextStyle(
+                              color: AppColors.textGrey,
+                            ),
                             filled: true,
-                            fillColor: Color(0xFFF3F3F3),
+                            fillColor: AppColors.inputFill,
                           ),
                           keyboardType: TextInputType.emailAddress,
                           validator:
                               (val) =>
                                   val == null || !val.contains('@')
-                                      ? "Enter valid email"
+                                      ? AppStrings.emailValidator
                                       : null,
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         // Password
                         TextFormField(
                           controller: _passwordController,
                           decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(
+                            labelText: AppStrings.password,
+                            prefixIcon: const Icon(
                               Icons.lock,
-                              color: Color(0xFF676767),
+                              color: AppColors.textGrey,
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10.0),
                             ),
-                            suffixIcon: Icon(
+                            suffixIcon: const Icon(
                               Icons.visibility,
-                              color: Color(0xFF676767),
+                              color: AppColors.textGrey,
                             ),
-                            labelStyle: TextStyle(color: Color(0xFF676767)),
+                            labelStyle: const TextStyle(
+                              color: AppColors.textGrey,
+                            ),
                             filled: true,
-                            fillColor: Color(0xFFF3F3F3),
+                            fillColor: AppColors.inputFill,
                           ),
                           obscureText: true,
                           validator:
                               (val) =>
                                   val == null || val.length < 6
-                                      ? "Min 6 characters"
+                                      ? AppStrings.passwordValidator
                                       : null,
                         ),
-                        SizedBox(height: 25),
+                        const SizedBox(height: 25),
                         RichText(
-                          text: TextSpan(
-                            text: 'By clicking the ',
-                            style: TextStyle(color: Color(0xFF676767)),
+                          text: const TextSpan(
+                            text: AppStrings.registerAgreement,
+                            style: TextStyle(color: AppColors.textGrey),
                             children: <TextSpan>[
                               TextSpan(
-                                text: 'Register',
-                                style: TextStyle(color: Color(0xFFFF4B26)),
+                                text: AppStrings.registerButton,
+                                style: TextStyle(color: AppColors.primary),
                               ),
                               TextSpan(
-                                text: ' button, you agree to the public offer',
-                                style: TextStyle(color: Color(0xFF676767)),
+                                text: AppStrings.registerAgreement2,
+                                style: TextStyle(color: AppColors.textGrey),
                               ),
                             ],
                           ),
                         ),
-                        SizedBox(height: 30),
-                        // Create Account button
+                        const SizedBox(height: 30),
                         GestureDetector(
                           onTap:
                               authProvider.isLoading
@@ -160,23 +168,24 @@ class _SignupScreenState extends State<SignupScreen> {
                                         _passwordController.text.trim(),
                                       );
 
+                                      // Show server-side error like duplicate email
                                       if (authProvider.errorMessage != null) {
-                                        // ❌ Use SnackbarHelper for error
                                         SnackbarHelper.showError(
                                           context,
                                           authProvider.errorMessage!,
                                         );
-                                      } else {
-                                        // ✅ Use SnackbarHelper for success
+                                      }
+                                      // Success case
+                                      else if (authProvider.user != null) {
                                         SnackbarHelper.showSuccess(
                                           context,
-                                          "Account created! Please login.",
+                                          AppStrings.accountCreated,
                                         );
 
                                         Navigator.pushReplacement(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => LoginScreen(),
+                                            builder: (_) => const LoginScreen(),
                                           ),
                                         );
                                       }
@@ -186,78 +195,76 @@ class _SignupScreenState extends State<SignupScreen> {
                             width: double.infinity,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: Color(0xFFF83758),
+                              color: AppColors.primary,
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                             child: Center(
                               child:
                                   authProvider.isLoading
-                                      ? CircularProgressIndicator(
+                                      ? const CircularProgressIndicator(
                                         color: Colors.white,
                                       )
-                                      : Text(
-                                        'Create Account',
+                                      : const Text(
+                                        AppStrings.createAccountButton,
                                         style: TextStyle(
                                           fontSize: 16,
-                                          color: Color(0xFFFFFFFF),
+                                          color: Colors.white,
                                         ),
                                       ),
                             ),
                           ),
                         ),
-                        SizedBox(height: 20),
-                        Text(
-                          '- OR Continue with -',
-                          style: TextStyle(color: Color(0xFF575757)),
+                        const SizedBox(height: 20),
+                        const Text(
+                          AppStrings.orContinue,
+                          style: TextStyle(color: AppColors.textLightGrey),
                         ),
-                        SizedBox(height: 10),
-                        // Social buttons
+                        const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _socialButton('assets/images/search.png'),
-                            SizedBox(width: 10),
+                            const SizedBox(width: 10),
                             _socialButton(
                               null,
                               icon: Icons.apple,
-                              iconColor: Color(0xFF000000),
+                              iconColor: Colors.black,
                             ),
-                            SizedBox(width: 10),
+                            const SizedBox(width: 10),
                             _socialButton(
                               null,
                               icon: Icons.facebook,
-                              iconColor: Color(0xFF3D4DA6),
+                              iconColor: AppColors.facebookBlue,
                             ),
                           ],
                         ),
-                        SizedBox(height: 20),
-                        // Login link
+                        const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              "I Already Have an Account ",
+                            const Text(
+                              AppStrings.alreadyAccount,
                               style: TextStyle(
-                                color: Color(0xFF575757),
+                                color: AppColors.textLightGrey,
                                 fontSize: 16,
                               ),
                             ),
                             GestureDetector(
                               onTap: () {
-                                Navigator.push(
+                                Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => LoginScreen(),
+                                    builder: (_) => const LoginScreen(),
                                   ),
                                 );
                               },
-                              child: Text(
-                                "Login",
+                              child: const Text(
+                                AppStrings.login,
                                 style: TextStyle(
-                                  color: Color(0xFFF83758),
+                                  color: AppColors.primary,
                                   fontSize: 16,
                                   decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFFF83758),
+                                  decorationColor: AppColors.primary,
                                 ),
                               ),
                             ),
@@ -280,9 +287,9 @@ class _SignupScreenState extends State<SignupScreen> {
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: Color(0xFFFCF3F6),
+        color: AppColors.socialButton,
         shape: BoxShape.circle,
-        border: Border.all(color: Color(0xFFF83758), width: 2.0),
+        border: Border.all(color: AppColors.primary, width: 2.0),
       ),
       child: IconButton(
         icon:
@@ -290,7 +297,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ? Image.asset(image, height: 30)
                 : Icon(icon, color: iconColor, size: 30),
         onPressed: () {},
-        padding: EdgeInsets.all(0),
+        padding: EdgeInsets.zero,
       ),
     );
   }

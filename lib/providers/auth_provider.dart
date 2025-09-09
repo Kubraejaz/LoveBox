@@ -15,17 +15,13 @@ class AuthProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   // Register
-  Future<void> register(String name, String email, String password) async {
+  Future<bool> register(String name, String email, String password) async {
     _setLoading(true);
     try {
       final response = await http.post(
         Uri.parse(ApiEndpoints.register),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'name': name, 'email': email, 'password': password}),
       );
 
       final data = jsonDecode(response.body);
@@ -41,6 +37,8 @@ class AuthProvider with ChangeNotifier {
           );
         }
         _errorMessage = null;
+        _setLoading(false);
+        return true;
       } else {
         if (data['errors'] != null) {
           final errors = data['errors'] as Map<String, dynamic>;
@@ -50,24 +48,24 @@ class AuthProvider with ChangeNotifier {
         } else {
           _errorMessage = "Registration failed";
         }
+        _setLoading(false);
+        return false;
       }
     } catch (e) {
       _errorMessage = "Something went wrong: $e";
+      _setLoading(false);
+      return false;
     }
-    _setLoading(false);
   }
 
   // Login
-  Future<void> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     _setLoading(true);
     try {
       final response = await http.post(
         Uri.parse(ApiEndpoints.login),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       final data = jsonDecode(response.body);
@@ -81,6 +79,8 @@ class AuthProvider with ChangeNotifier {
           _user!.token,
         );
         _errorMessage = null;
+        _setLoading(false);
+        return true;
       } else {
         if (data['errors'] != null) {
           final errors = data['errors'] as Map<String, dynamic>;
@@ -90,11 +90,14 @@ class AuthProvider with ChangeNotifier {
         } else {
           _errorMessage = "Invalid email or password";
         }
+        _setLoading(false);
+        return false;
       }
     } catch (e) {
       _errorMessage = "Something went wrong: $e";
+      _setLoading(false);
+      return false;
     }
-    _setLoading(false);
   }
 
   // Logout

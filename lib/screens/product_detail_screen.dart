@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lovebox/constants/color.dart';
+import 'package:lovebox/constants/strings.dart';
 import 'package:lovebox/utils/snackbar_helper.dart';
 
 class ProductDetailScreen extends StatelessWidget {
@@ -9,27 +11,25 @@ class ProductDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
           product["name"],
           style: const TextStyle(
-            color: Colors.black, // 👈 Title color black
+            color: AppColors.textDark,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(
-          color: Colors.black,
-        ), // 👈 Back icon color black
+        backgroundColor: AppColors.background,
+        iconTheme: const IconThemeData(color: AppColors.textDark),
         elevation: 0,
-        titleSpacing: 0, // 👈 Back icon aur title ke beech spacing remove
+        titleSpacing: 0,
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🖼 Product Image
+            // Product Image
             ClipRRect(
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(24),
@@ -43,11 +43,11 @@ class ProductDetailScreen extends StatelessWidget {
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     height: 300,
-                    color: Colors.grey[200],
+                    color: AppColors.brokenImage,
                     child: const Icon(
                       Icons.broken_image,
                       size: 80,
-                      color: Colors.grey,
+                      color: AppColors.textGrey,
                     ),
                   );
                 },
@@ -56,7 +56,7 @@ class ProductDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // 📦 Product Name & Price
+            // Product Name & Price
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -68,7 +68,7 @@ class ProductDetailScreen extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppColors.textDark,
                       ),
                     ),
                   ),
@@ -77,7 +77,7 @@ class ProductDetailScreen extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFF83758),
+                      color: AppColors.primary,
                     ),
                   ),
                 ],
@@ -86,30 +86,29 @@ class ProductDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // 📝 Product Description
+            // Product Description
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                product["description"] ??
-                    "This is a lovely gift item perfect for your loved ones. Made with love and care to make every moment special.",
-                style: const TextStyle(fontSize: 15, color: Colors.black54),
+                product["description"] ?? AppStrings.defaultProductDescription,
+                style: const TextStyle(fontSize: 15, color: AppColors.textGrey),
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // 🛒 Add to Cart Button
+            // Add to Cart Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ElevatedButton(
                 onPressed: () {
                   SnackbarHelper.showSuccess(
                     context,
-                    "${product["name"]} has been added to your cart 🛒",
+                    "${product["name"]}${AppStrings.productAddedToCart}",
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF83758),
+                  backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -117,7 +116,7 @@ class ProductDetailScreen extends StatelessWidget {
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 child: const Text(
-                  "Add to Cart",
+                  AppStrings.addToCart,
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),

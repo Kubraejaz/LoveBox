@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:lovebox/constants/api_endpoints.dart';
-import 'package:lovebox/screens/home_screen.dart';
-import 'package:lovebox/screens/signup_screen.dart';
-import 'package:lovebox/services/local_storage.dart';
-import 'package:lovebox/models/user_model.dart';
-import 'package:lovebox/utils/snackbar_helper.dart';
+import '../constants/api_endpoints.dart';
+import '../constants/color.dart';
+import '../constants/strings.dart';
+import 'home_screen.dart';
+import 'signup_screen.dart';
+import '../services/local_storage.dart';
+import '../models/user_model.dart';
+import '../utils/snackbar_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,13 +24,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loginUser() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      SnackbarHelper.showError(context, "Please fill all fields");
+      SnackbarHelper.showError(context, AppStrings.fillAllFields);
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final response = await http.post(
@@ -41,59 +41,42 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (response.body.isEmpty) {
-        SnackbarHelper.showError(context, "Empty response from server");
+        SnackbarHelper.showError(context, AppStrings.emptyResponse);
         setState(() => _isLoading = false);
         return;
       }
 
       final data = jsonDecode(response.body);
-      print("Login response: $data"); // 🔎 Debugging
 
-      // ✅ Fix: Check "token" + "user" instead of "success"
       if (response.statusCode == 200 &&
           data['token'] != null &&
           data['user'] != null) {
         final user = UserModel.fromJson({
           ...data['user'],
-          "token": data['token'], // ✅ Add token into user object
+          "token": data['token'],
         });
-
         await LocalStorage.saveUser(user.id, user.name, user.email, user.token);
 
         if (!mounted) return;
 
         SnackbarHelper.showSuccess(
           context,
-          data['message'] ?? "Login successful",
+          data['message'] ?? AppStrings.loginSuccess,
         );
 
-        // ✅ Proper navigation to HomeScreen
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
           (Route<dynamic> route) => false,
         );
       } else {
-        String errorMessage = "Login failed";
-        if (data['errors'] != null) {
-          final errors = data['errors'] as Map<String, dynamic>;
-          final firstError = errors.values.first;
-          if (firstError is List && firstError.isNotEmpty) {
-            errorMessage = firstError[0];
-          } else {
-            errorMessage = firstError.toString();
-          }
-        } else if (data['message'] != null) {
-          errorMessage = data['message'];
-        }
+        String errorMessage = data['message'] ?? AppStrings.loginFailed;
         SnackbarHelper.showError(context, errorMessage);
       }
     } catch (e) {
-      SnackbarHelper.showError(context, "Error: $e");
+      SnackbarHelper.showError(context, "${AppStrings.error}: $e");
     }
 
-    setState(() {
-      _isLoading = false;
-    });
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -109,79 +92,75 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Welcome Back!',
-                    style: TextStyle(
+                    AppStrings.welcomeBack,
+                    style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF000000),
+                      color: AppColors.textDark,
                     ),
                   ),
                 ),
                 const SizedBox(height: 40),
-
-                // Email
+                // Email Field
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: AppStrings.email,
                     prefixIcon: const Icon(
                       Icons.email,
-                      color: Color(0xFF676767),
+                      color: AppColors.textGrey,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
-                    labelStyle: const TextStyle(color: Color(0xFF676767)),
+                    labelStyle: const TextStyle(color: AppColors.textGrey),
                     filled: true,
-                    fillColor: const Color(0xFFF3F3F3),
+                    fillColor: AppColors.inputFill,
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Password
+                // Password Field
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: AppStrings.password,
                     prefixIcon: const Icon(
                       Icons.lock,
-                      color: Color(0xFF676767),
+                      color: AppColors.textGrey,
                     ),
                     suffixIcon: const Icon(
                       Icons.visibility,
-                      color: Color(0xFF676767),
+                      color: AppColors.textGrey,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
-                    labelStyle: const TextStyle(color: Color(0xFF676767)),
+                    labelStyle: const TextStyle(color: AppColors.textGrey),
                     filled: true,
-                    fillColor: const Color(0xFFF3F3F3),
+                    fillColor: AppColors.inputFill,
                   ),
                 ),
                 const SizedBox(height: 8),
-
                 Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
                     onTap: () {},
                     child: const Text(
-                      'Forgot Password?',
-                      style: TextStyle(color: Color(0xFFF83758), fontSize: 14),
+                      AppStrings.forgotPassword,
+                      style: TextStyle(color: AppColors.primary, fontSize: 14),
                     ),
                   ),
                 ),
                 const SizedBox(height: 25),
-
-                // Login button
+                // Login Button
                 GestureDetector(
                   onTap: _isLoading ? null : _loginUser,
                   child: Container(
                     width: double.infinity,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF83758),
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                     child: Center(
@@ -191,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: Colors.white,
                               )
                               : const Text(
-                                'Login',
+                                AppStrings.loginButton,
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.white,
@@ -202,51 +181,51 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 25),
-
                 const Text(
-                  '- OR Continue with -',
-                  style: TextStyle(color: Color(0xFF575757)),
+                  AppStrings.orContinue,
+                  style: TextStyle(color: AppColors.textLightGrey),
                 ),
                 const SizedBox(height: 15),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _socialButton(image: 'assets/images/search.png'),
                     const SizedBox(width: 12),
-                    _socialButton(icon: Icons.apple, color: Color(0xFF000000)),
+                    _socialButton(icon: Icons.apple, color: AppColors.textDark),
                     const SizedBox(width: 12),
                     _socialButton(
                       icon: Icons.facebook,
-                      color: Color(0xFF3D4DA6),
+                      color: AppColors.facebookBlue,
                     ),
                   ],
                 ),
                 const SizedBox(height: 25),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "Create An Account ",
-                      style: TextStyle(color: Color(0xFF575757), fontSize: 16),
+                      AppStrings.createAccountLogin,
+                      style: TextStyle(
+                        color: AppColors.textLightGrey,
+                        fontSize: 16,
+                      ),
                     ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SignupScreen(),
+                            builder: (context) => const SignupScreen(),
                           ),
                         );
                       },
                       child: const Text(
-                        "Sign Up",
+                        AppStrings.signUp,
                         style: TextStyle(
-                          color: Color(0xFFF83758),
+                          color: AppColors.primary,
                           fontSize: 16,
                           decoration: TextDecoration.underline,
-                          decorationColor: Color(0xFFF83758),
+                          decorationColor: AppColors.primary,
                         ),
                       ),
                     ),
@@ -266,9 +245,9 @@ class _LoginScreenState extends State<LoginScreen> {
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: const Color(0xFFFCF3F6),
+        color: AppColors.socialButton,
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFF83758), width: 2.0),
+        border: Border.all(color: AppColors.primary, width: 2.0),
       ),
       child: IconButton(
         icon:
