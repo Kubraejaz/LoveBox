@@ -45,8 +45,8 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.pink,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: Colors.pink, // ✅ selected = pink
+        unselectedItemColor: Colors.black, // ✅ unselected = black
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
@@ -64,3 +64,5 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
     );
   }
 }
+
+
