@@ -56,8 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
           "token": data['token'],
         });
 
-        // Save user info
-        await LocalStorage.saveUser(user.id, user.name, user.email, user.token);
+        // ✅ Save user info using updated method
+        await LocalStorage.saveUser(user);
 
         // ✅ Reset nav index to Home on fresh login
         await LocalStorage.resetNavIndex();
@@ -278,4 +278,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

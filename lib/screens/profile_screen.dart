@@ -1,10 +1,33 @@
 import 'package:flutter/material.dart';
 import '../constants/color.dart';
 import '../services/local_storage.dart';
+import '../models/user_model.dart';
 import 'login_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  UserModel? _user; // ✅ Current logged-in user
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final user = await LocalStorage.getUser(); // ✅ fetch UserModel
+    if (user != null && mounted) {
+      setState(() {
+        _user = user;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,40 +49,55 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 60,
               backgroundImage: NetworkImage(
-                "https://static.vecteezy.com/system/resources/thumbnails/029/769/642/small/portrait-of-beautiful-muslim-female-student-online-learning-in-coffee-shop-young-woman-with-hijab-studies-with-laptop-in-cafe-girl-doing-her-homework-free-photo.jpeg",
+                _user != null
+                    ? "https://static.vecteezy.com/system/resources/thumbnails/029/769/642/small/portrait-of-beautiful-muslim-female-student-online-learning-in-coffee-shop-young-woman-with-hijab-studies-with-laptop-in-cafe-girl-doing-her-homework-free-photo.jpeg"
+                    : "https://via.placeholder.com/150",
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "Kubra Ejaz",
-              style: TextStyle(
+            Text(
+              _user?.name ?? "Guest User",
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textDark,
               ),
             ),
             const SizedBox(height: 2),
-            const Text(
-              "kubra@example.com",
-              style: TextStyle(fontSize: 15, color: AppColors.textGrey),
+            Text(
+              _user?.email ?? "guest@example.com",
+              style: const TextStyle(
+                fontSize: 15,
+                color: AppColors.textGrey,
+              ),
             ),
             const SizedBox(height: 10),
             Expanded(
               child: ListView(
                 children: [
-                  _buildProfileTile(Icons.edit, "Edit Profile", () {}),
-                  _buildProfileTile(Icons.lock, "Change Password", () {}),
-                  _buildProfileTile(Icons.shopping_bag, "My Orders", () {}),
-                  _buildProfileTile(Icons.settings, "Settings", () {}),
+                  _buildProfileTile(Icons.edit, "Edit Profile", () {
+                    // TODO: Edit profile action
+                  }),
+                  _buildProfileTile(Icons.lock, "Change Password", () {
+                    // TODO: Change password action
+                  }),
+                  _buildProfileTile(Icons.shopping_bag, "My Orders", () {
+                    // TODO: My orders action
+                  }),
+                  _buildProfileTile(Icons.settings, "Settings", () {
+                    // TODO: Settings action
+                  }),
                   _buildProfileTile(Icons.logout, "Logout", () async {
                     await LocalStorage.clearUser();
-                    await LocalStorage.saveNavIndex(0); // ✅ reset to Home
-                    if (!context.mounted) return;
+                    await LocalStorage.resetNavIndex();
+                    if (!mounted) return;
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const LoginScreen(),
+                      ),
                       (route) => false,
                     );
                   }),

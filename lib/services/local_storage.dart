@@ -1,37 +1,31 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../models/user_model.dart';
 
 class LocalStorage {
   // ------------------- USER -------------------
-  static Future<void> saveUser(
-    String id,
-    String name,
-    String email,
-    String token,
-  ) async {
+  static Future<void> saveUser(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('id', id);
-    await prefs.setString('name', name);
-    await prefs.setString('email', email);
-    await prefs.setString('token', token);
+    // ✅ ek hi key 'user' me full JSON save hoga
+    await prefs.setString('user', jsonEncode(user.toJson()));
   }
 
-  static Future<Map<String, String>> getUser() async {
+  static Future<UserModel?> getUser() async {
     final prefs = await SharedPreferences.getInstance();
-    return {
-      'id': prefs.getString('id') ?? '',
-      'name': prefs.getString('name') ?? '',
-      'email': prefs.getString('email') ?? '',
-      'token': prefs.getString('token') ?? '',
-    };
+    final data = prefs.getString('user');
+    if (data == null || data.isEmpty) return null;
+
+    try {
+      final Map<String, dynamic> json = jsonDecode(data);
+      return UserModel.fromJson(json);
+    } catch (e) {
+      return null;
+    }
   }
 
   static Future<void> clearUser() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('id');
-    await prefs.remove('name');
-    await prefs.remove('email');
-    await prefs.remove('token');
+    await prefs.remove('user'); // ✅ clear full user
     await prefs.remove('navIndex');
   }
 
@@ -46,7 +40,6 @@ class LocalStorage {
     return prefs.getInt('navIndex') ?? 0;
   }
 
-  // ✅ Added: Reset nav index to 0 (for fresh login)
   static Future<void> resetNavIndex() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('navIndex', 0);

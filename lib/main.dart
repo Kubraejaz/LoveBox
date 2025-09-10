@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:lovebox/screens/bottom_navbar_screen.dart';
 import 'package:provider/provider.dart';
-import 'services/local_storage.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final userMap = await LocalStorage.getUser();
-  final bool isLoggedIn = (userMap['id'] ?? '').isNotEmpty;
+  // ✅ Initialize AuthProvider first
+  final authProvider = AuthProvider();
+  await authProvider.loadUserFromLocal();
 
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
-      child: MyApp(isLoggedIn: isLoggedIn),
+      providers: [
+        ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+      ],
+      child: MyApp(isLoggedIn: authProvider.user != null),
     ),
   );
 }
@@ -29,7 +31,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'LoveBox',
       theme: ThemeData(primarySwatch: Colors.pink),
-      home: isLoggedIn ? const BottomNavBarScreen() : const LoginScreen(),
+      home: isLoggedIn
+          ? const BottomNavBarScreen(initialIndex: 0)
+          : const LoginScreen(),
     );
   }
 }

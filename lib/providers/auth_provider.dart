@@ -29,12 +29,8 @@ class AuthProvider with ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['user'] != null) {
           _user = UserModel.fromJson(data['user']);
-          await LocalStorage.saveUser(
-            _user!.id,
-            _user!.name,
-            _user!.email,
-            _user!.token,
-          );
+          // ✅ Save full UserModel
+          await LocalStorage.saveUser(_user!);
         }
         _errorMessage = null;
         _setLoading(false);
@@ -72,12 +68,8 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200 && data['user'] != null) {
         _user = UserModel.fromJson(data['user']);
-        await LocalStorage.saveUser(
-          _user!.id,
-          _user!.name,
-          _user!.email,
-          _user!.token,
-        );
+        // ✅ Save full UserModel
+        await LocalStorage.saveUser(_user!);
         _errorMessage = null;
         _setLoading(false);
         return true;
@@ -112,18 +104,11 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Load user from local storage
   Future<void> loadUserFromLocal() async {
-    final userMap = await LocalStorage.getUser();
-    if (userMap['id'] != null &&
-        userMap['name'] != null &&
-        userMap['email'] != null &&
-        userMap['token'] != null) {
-      _user = UserModel(
-        id: userMap['id']!,
-        name: userMap['name']!,
-        email: userMap['email']!,
-        token: userMap['token']!,
-      );
+    final user = await LocalStorage.getUser(); // ✅ directly returns UserModel?
+    if (user != null) {
+      _user = user;
       notifyListeners();
     }
   }

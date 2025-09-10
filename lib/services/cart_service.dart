@@ -1,4 +1,5 @@
 import 'package:lovebox/services/local_storage.dart';
+import '../models/user_model.dart';
 
 class CartService {
   // ✅ Singleton instance
@@ -11,8 +12,8 @@ class CartService {
 
   // ✅ Load cart for the currently logged-in user
   Future<void> loadCart() async {
-    final user = await LocalStorage.getUser();
-    _userId = user['id'];
+    final UserModel? user = await LocalStorage.getUser(); // ✅ get UserModel
+    _userId = user?.id;
 
     if (_userId != null && _userId!.isNotEmpty) {
       _cartItems = await LocalStorage.getCart(_userId!) ?? [];
