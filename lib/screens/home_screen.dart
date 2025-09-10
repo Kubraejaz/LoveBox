@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
 import 'product_detail_screen.dart';
-import '../services/local_storage.dart';
 import '../constants/color.dart';
 import '../constants/strings.dart';
 
@@ -91,79 +89,6 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.primary),
-            onPressed: () async {
-              bool? shouldLogout = await showDialog(
-                context: context,
-                builder: (context) => Dialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  backgroundColor: Colors.white,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          AppStrings.logoutConfirm,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (states) => states.contains(MaterialState.pressed)
-                                      ? AppColors.primary
-                                      : Colors.grey,
-                                ),
-                              ),
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text(AppStrings.no,
-                                  style: TextStyle(color: Colors.black)),
-                            ),
-                            ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (states) => states.contains(MaterialState.pressed)
-                                      ? AppColors.primary
-                                      : Colors.grey,
-                                ),
-                              ),
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: const Text(AppStrings.yes,
-                                  style: TextStyle(color: Colors.black)),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-
-              if (shouldLogout == true) {
-                await LocalStorage.clearUser();
-                if (!context.mounted) return;
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (Route<dynamic> route) => false,
-                );
-              }
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -203,8 +128,8 @@ class HomeScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) =>
-                                ProductDetailScreen(product: product)),
+                          builder: (_) => ProductDetailScreen(product: product),
+                        ),
                       );
                     },
                     child: Card(
@@ -218,7 +143,8 @@ class HomeScreen extends StatelessWidget {
                           Expanded(
                             child: ClipRRect(
                               borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16)),
+                                top: Radius.circular(16),
+                              ),
                               child: Image.network(
                                 product["image"],
                                 width: double.infinity,
@@ -226,8 +152,11 @@ class HomeScreen extends StatelessWidget {
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
                                     color: Colors.grey[200],
-                                    child: const Icon(Icons.broken_image,
-                                        size: 50, color: Colors.grey),
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
                                   );
                                 },
                               ),
@@ -238,14 +167,21 @@ class HomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(product["name"],
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16)),
+                                Text(
+                                  product["name"],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
-                                Text(product["price"],
-                                    style: const TextStyle(
-                                        color: AppColors.primary, fontSize: 14)),
+                                Text(
+                                  product["price"],
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ],
                             ),
                           ),

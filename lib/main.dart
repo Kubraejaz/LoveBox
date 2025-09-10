@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lovebox/screens/bottom_navbar_screen.dart';
 import 'package:provider/provider.dart';
 import 'services/local_storage.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'LoveBox',
       theme: ThemeData(primarySwatch: Colors.pink),
-      home: isLoggedIn ? const HomeScreen() : const LoginScreen(),
+      home: isLoggedIn ? const BottomNavBarScreen() : const LoginScreen(),
     );
   }
 }

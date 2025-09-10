@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:lovebox/screens/bottom_navbar_screen.dart';
 import '../constants/api_endpoints.dart';
 import '../constants/color.dart';
 import '../constants/strings.dart';
-import 'home_screen.dart';
 import 'signup_screen.dart';
 import '../services/local_storage.dart';
 import '../models/user_model.dart';
@@ -55,7 +55,12 @@ class _LoginScreenState extends State<LoginScreen> {
           ...data['user'],
           "token": data['token'],
         });
+
+        // Save user info
         await LocalStorage.saveUser(user.id, user.name, user.email, user.token);
+
+        // ✅ Reset nav index to Home on fresh login
+        await LocalStorage.resetNavIndex();
 
         if (!mounted) return;
 
@@ -64,8 +69,11 @@ class _LoginScreenState extends State<LoginScreen> {
           data['message'] ?? AppStrings.loginSuccess,
         );
 
+        // ✅ Always go to Home (BottomNavBarScreen index 0)
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => const BottomNavBarScreen(initialIndex: 0),
+          ),
           (Route<dynamic> route) => false,
         );
       } else {
@@ -101,6 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
+
                 // Email Field
                 TextField(
                   controller: _emailController,
@@ -119,6 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
                 // Password Field
                 TextField(
                   controller: _passwordController,
@@ -142,17 +152,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
+
                 Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      // TODO: Add Forgot Password Logic
+                    },
                     child: const Text(
                       AppStrings.forgotPassword,
                       style: TextStyle(color: AppColors.primary, fontSize: 14),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 25),
+
                 // Login Button
                 GestureDetector(
                   onTap: _isLoading ? null : _loginUser,
@@ -164,28 +179,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                     child: Center(
-                      child:
-                          _isLoading
-                              ? const CircularProgressIndicator(
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              AppStrings.loginButton,
+                              style: TextStyle(
+                                fontSize: 16,
                                 color: Colors.white,
-                              )
-                              : const Text(
-                                AppStrings.loginButton,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                fontWeight: FontWeight.bold,
                               ),
+                            ),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 25),
+
                 const Text(
                   AppStrings.orContinue,
                   style: TextStyle(color: AppColors.textLightGrey),
                 ),
                 const SizedBox(height: 15),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -199,7 +216,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 25),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -215,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const SignupScreen(),
+                            builder: (_) => const SignupScreen(),
                           ),
                         );
                       },
@@ -250,13 +269,13 @@ class _LoginScreenState extends State<LoginScreen> {
         border: Border.all(color: AppColors.primary, width: 2.0),
       ),
       child: IconButton(
-        icon:
-            image != null
-                ? Image.asset(image, height: 30)
-                : Icon(icon, color: color, size: 30),
+        icon: image != null
+            ? Image.asset(image, height: 30)
+            : Icon(icon, color: color, size: 30),
         onPressed: () {},
         padding: EdgeInsets.zero,
       ),
     );
   }
 }
+

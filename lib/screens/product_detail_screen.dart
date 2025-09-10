@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lovebox/constants/color.dart';
 import 'package:lovebox/constants/strings.dart';
 import 'package:lovebox/utils/snackbar_helper.dart';
+import 'package:lovebox/services/cart_service.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -10,6 +11,8 @@ class ProductDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cartService = CartService();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -73,7 +76,7 @@ class ProductDetailScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    product["price"],
+                    "\$${product["price"]}",
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -97,15 +100,32 @@ class ProductDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Add to Cart Button
+            // ✅ Add to Cart Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ElevatedButton(
-                onPressed: () {
-                  SnackbarHelper.showSuccess(
-                    context,
-                    "${product["name"]}${AppStrings.productAddedToCart}",
-                  );
+                onPressed: () async {
+                  // Ensure product has a unique id
+                  final productWithId = {
+                    "id":
+                        product["id"] ??
+                        product["name"], // fallback name if id not available
+                    ...product,
+                  };
+
+                  final added = await cartService.addItem(productWithId);
+
+                  if (added) {
+                    SnackbarHelper.showSuccess(
+                      context,
+                      "${product["name"]}${AppStrings.productAddedToCart}",
+                    );
+                  } else {
+                    SnackbarHelper.showError(
+                      context,
+                      "${product["name"]} is already in the cart!",
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
