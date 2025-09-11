@@ -3,21 +3,34 @@ import 'package:lovebox/constants/color.dart';
 import 'package:lovebox/constants/strings.dart';
 import 'package:lovebox/utils/snackbar_helper.dart';
 import 'package:lovebox/services/cart_service.dart';
+import '../models/product_model.dart';
 
 class ProductDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> product;
+  final ProductModel product;
 
   const ProductDetailScreen({super.key, required this.product});
+
+  String _formatPrice(String price) {
+    // Simple formatting hook — you can replace with NumberFormat later
+    return price;
+  }
 
   @override
   Widget build(BuildContext context) {
     final cartService = CartService();
 
+    final imageUrl = (product.image != null && product.image!.isNotEmpty)
+        ? product.image!
+        : 'https://via.placeholder.com/600x300?text=No+Image';
+
+    final ratingText = "${(product.ratingAvg ?? 0).toString()} / 5";
+    final ratingCountText = "(${product.ratingCount ?? 0} reviews)";
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          product["name"],
+          product.name,
           style: const TextStyle(
             color: AppColors.textDark,
             fontWeight: FontWeight.bold,
@@ -39,7 +52,7 @@ class ProductDetailScreen extends StatelessWidget {
                 bottomRight: Radius.circular(24),
               ),
               child: Image.network(
-                product["image"],
+                imageUrl,
                 height: 300,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -59,7 +72,7 @@ class ProductDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Product Name & Price
+            // Name & Price (PKR)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -67,7 +80,7 @@ class ProductDetailScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      product["name"],
+                      product.name,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -76,7 +89,7 @@ class ProductDetailScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "\$${product["price"]}",
+                    "PKR ${_formatPrice(product.price)}",
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -89,41 +102,77 @@ class ProductDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Product Description
+            // Stock
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                product["description"] ?? AppStrings.defaultProductDescription,
+                "Stock: ${product.stock?.toString() ?? 'N/A'}",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Rating
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: Colors.amber, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    ratingText,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    ratingCountText,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Description
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                product.description ?? AppStrings.defaultProductDescription,
                 style: const TextStyle(fontSize: 15, color: AppColors.textGrey),
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // ✅ Add to Cart Button
+            // Add to Cart Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ElevatedButton(
                 onPressed: () async {
-                  // Ensure product has a unique id
-                  final productWithId = {
-                    "id":
-                        product["id"] ??
-                        product["name"], // fallback name if id not available
-                    ...product,
-                  };
-
-                  final added = await cartService.addItem(productWithId);
+                  final productMap = product.toJson();
+                  final added = await cartService.addItem(productMap);
 
                   if (added) {
                     SnackbarHelper.showSuccess(
                       context,
-                      "${product["name"]}${AppStrings.productAddedToCart}",
+                      "${product.name}${AppStrings.productAddedToCart}",
                     );
                   } else {
                     SnackbarHelper.showError(
                       context,
-                      "${product["name"]} is already in the cart!",
+                      "${product.name} is already in the cart!",
                     );
                   }
                 },
