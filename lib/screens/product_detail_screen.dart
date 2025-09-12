@@ -19,9 +19,10 @@ class ProductDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cartService = CartService();
 
-    final imageUrl = (product.image != null && product.image!.isNotEmpty)
-        ? product.image!
-        : 'https://via.placeholder.com/600x300?text=No+Image';
+    final imageUrl =
+        (product.image != null && product.image!.isNotEmpty)
+            ? product.image!
+            : 'https://via.placeholder.com/600x300?text=No+Image';
 
     final ratingText = "${(product.ratingAvg ?? 0).toString()} / 5";
     final ratingCountText = "(${product.ratingCount ?? 0} reviews)";

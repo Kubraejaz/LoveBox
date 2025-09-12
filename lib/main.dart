@@ -31,9 +31,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'LoveBox',
       theme: ThemeData(primarySwatch: Colors.pink),
-      home: isLoggedIn
-          ? const BottomNavBarScreen(initialIndex: 0)
-          : const LoginScreen(),
+      home:
+          isLoggedIn
+              ? const BottomNavBarScreen(initialIndex: 0)
+              : const LoginScreen(),
     );
   }
 }
