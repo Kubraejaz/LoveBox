@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:lovebox/utils/snackbar_helper.dart';
-import 'product_detail_screen.dart';
+import 'package:lovebox/sections/category_section.dart';
+import 'package:lovebox/sections/product_grid_section.dart';
+import 'package:lovebox/sections/refresh_helper.dart';
+import 'package:lovebox/sections/search_section.dart';
+import 'package:lovebox/sections/ad_banner_section.dart'; // ✅ Import AdBannerSection
 import '../constants/color.dart';
 import '../constants/strings.dart';
-import '../services/product_service.dart';
 import '../models/product_model.dart';
+import '../services/product_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -73,21 +76,18 @@ class _HomeScreenState extends State<HomeScreen> {
       _isRefreshing = true;
     });
 
-    try {
-      SnackbarHelper.showInfo(context, "Refreshing products...");
+    await RefreshHelper.refreshProducts(
+      context: context,
+      refreshFunction: () async {
+        setState(() {
+          _productsFuture = _loadProducts();
+        });
+      },
+    );
 
-      setState(() {
-        _productsFuture = _loadProducts();
-      });
-
-      await Future.delayed(const Duration(milliseconds: 500));
-    } catch (e) {
-      SnackbarHelper.showError(context, "Failed to refresh: $e");
-    } finally {
-      setState(() {
-        _isRefreshing = false;
-      });
-    }
+    setState(() {
+      _isRefreshing = false;
+    });
   }
 
   // ✅ Pull to refresh
@@ -122,84 +122,26 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ✅ Dynamic Categories
-              Container(
-                height: 40,
-                alignment: Alignment.centerLeft,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: categories.length,
-                  itemBuilder: (context, index) {
-                    final category = categories[index];
-                    final isSelected = category == selectedCategory;
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedCategory = category;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 12),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textGrey,
-                          borderRadius: BorderRadius.circular(20),
-                          border:
-                              !isSelected
-                                  ? Border.all(
-                                    color: Colors.grey.shade300,
-                                    width: 1,
-                                  )
-                                  : null,
-                        ),
-                        child: Center(
-                          child: Text(
-                            category,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.black87,
-                              fontWeight:
-                                  isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              CategorySection(
+                categories: categories,
+                selectedCategory: selectedCategory,
+                onCategorySelected: (category) {
+                  setState(() {
+                    selectedCategory = category;
+                  });
+                },
               ),
 
               const SizedBox(height: 20),
 
               // ✅ Search Bar
-              Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.inputFill,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200, width: 1),
-                ),
-                child: const TextField(
-                  decoration: InputDecoration(
-                    hintText: AppStrings.searchHint,
-                    hintStyle: TextStyle(color: Colors.grey),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  ),
-                ),
-              ),
+              const SearchSection(),
+
+              const SizedBox(height: 20),
+
+              // ✅ Ad Banner Section (Added here)
+              const AdBannerSection(),
+
               const SizedBox(height: 24),
 
               // ✅ Product Grid
@@ -265,170 +207,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                                 .toList();
 
-                    return GridView.builder(
-                      controller: _scrollController,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: products.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 0.75,
-                          ),
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        return InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (_) =>
-                                        ProductDetailScreen(product: product),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 2,
-                            shadowColor: Colors.black26,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // ✅ Product Image
-                                Expanded(
-                                  flex: 3,
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius:
-                                            const BorderRadius.vertical(
-                                              top: Radius.circular(16),
-                                            ),
-                                        child: Image.network(
-                                          product.image ??
-                                              "https://via.placeholder.com/150",
-                                          width: double.infinity,
-                                          height: double.infinity,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
-                                            return Container(
-                                              width: double.infinity,
-                                              height: double.infinity,
-                                              color: Colors.grey[200],
-                                              child: const Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.broken_image,
-                                                    size: 40,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  SizedBox(height: 4),
-                                                  Text(
-                                                    "Image not available",
-                                                    style: TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-
-                                      // ✅ Heart Icon
-                                      Positioned(
-                                        top: 9,
-                                        right: 7,
-                                        child: Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(
-                                              0.9,
-                                            ),
-                                            shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.1,
-                                                ),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: IconButton(
-                                            padding: EdgeInsets.zero,
-                                            iconSize: 18,
-                                            icon: const Icon(
-                                              Icons.favorite_border,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () {
-                                              SnackbarHelper.showSuccess(
-                                                context,
-                                                "${product.name} added to favorites",
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // ✅ Product Info
-                                Expanded(
-                                  flex: 2,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          product.name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                            height: 1.2,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          "PKR ${product.price}",
-                                          style: const TextStyle(
-                                            color: AppColors.primary,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                    return ProductGridSection(
+                      products: products,
+                      scrollController: _scrollController,
                     );
                   },
                 ),

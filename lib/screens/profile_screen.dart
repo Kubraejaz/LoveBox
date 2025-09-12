@@ -3,6 +3,7 @@ import '../constants/color.dart';
 import '../services/local_storage.dart';
 import '../models/user_model.dart';
 import 'login_screen.dart';
+// ✅ still reuse helper
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,7 +13,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  UserModel? _user; // ✅ Current logged-in user
+  UserModel? _user;
 
   @override
   void initState() {
@@ -21,12 +22,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    final user = await LocalStorage.getUser(); // ✅ fetch UserModel
-    if (user != null && mounted) {
+    final user = await LocalStorage.getUser();
+    if (mounted) {
       setState(() {
         _user = user;
       });
     }
+  }
+
+  Future<void> _refreshProfile() async {
+    // ✅ refresh silently (no snackbar)
+    await _loadUser();
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   @override
@@ -45,66 +52,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundImage: NetworkImage(
-                _user != null
-                    ? "https://static.vecteezy.com/system/resources/thumbnails/029/769/642/small/portrait-of-beautiful-muslim-female-student-online-learning-in-coffee-shop-young-woman-with-hijab-studies-with-laptop-in-cafe-girl-doing-her-homework-free-photo.jpeg"
-                    : "https://via.placeholder.com/150",
+      body: RefreshIndicator(
+        onRefresh: _refreshProfile,
+        color: AppColors.primary,
+        backgroundColor: Colors.white,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 60,
+                backgroundImage: NetworkImage(
+                  _user != null
+                      ? "https://static.vecteezy.com/system/resources/thumbnails/029/769/642/small/portrait-of-beautiful-muslim-female-student-online-learning-in-coffee-shop-young-woman-with-hijab-studies-with-laptop-in-cafe-girl-doing-her-homework-free-photo.jpeg"
+                      : "https://via.placeholder.com/150",
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _user?.name ?? "Guest User",
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+              const SizedBox(height: 10),
+              Text(
+                _user?.name ?? "Guest User",
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              _user?.email ?? "guest@example.com",
-              style: const TextStyle(
-                fontSize: 15,
-                color: AppColors.textGrey,
+              const SizedBox(height: 2),
+              Text(
+                _user?.email ?? "guest@example.com",
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textGrey,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildProfileTile(Icons.edit, "Edit Profile", () {
-                    // TODO: Edit profile action
-                  }),
-                  _buildProfileTile(Icons.lock, "Change Password", () {
-                    // TODO: Change password action
-                  }),
-                  _buildProfileTile(Icons.shopping_bag, "My Orders", () {
-                    // TODO: My orders action
-                  }),
-                  _buildProfileTile(Icons.settings, "Settings", () {
-                    // TODO: Settings action
-                  }),
-                  _buildProfileTile(Icons.logout, "Logout", () async {
-                    await LocalStorage.clearUser();
-                    await LocalStorage.resetNavIndex();
-                    if (!mounted) return;
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (_) => const LoginScreen(),
-                      ),
-                      (route) => false,
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ],
+              const SizedBox(height: 20),
+
+              // Profile Actions
+              _buildProfileTile(Icons.edit, "Edit Profile", () {}),
+              _buildProfileTile(Icons.lock, "Change Password", () {}),
+              _buildProfileTile(Icons.shopping_bag, "My Orders", () {}),
+              _buildProfileTile(Icons.settings, "Settings", () {}),
+              _buildProfileTile(Icons.logout, "Logout", () async {
+                await LocalStorage.clearUser();
+                await LocalStorage.resetNavIndex();
+                if (!mounted) return;
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) => const LoginScreen(),
+                  ),
+                  (route) => false,
+                );
+              }),
+
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );
