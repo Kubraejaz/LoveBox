@@ -12,17 +12,14 @@ class SearchSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200, width: 1),
+        border: Border.all(color: Colors.grey.shade500, width: 1),
       ),
       child: const TextField(
         decoration: InputDecoration(
           hintText: AppStrings.searchHint,
           hintStyle: TextStyle(color: Colors.grey),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           prefixIcon: Icon(Icons.search, color: Colors.grey),
         ),
       ),

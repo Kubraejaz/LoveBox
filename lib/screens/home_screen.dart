@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lovebox/sections/category_section.dart';
 import 'package:lovebox/sections/product_grid_section.dart';
-import 'package:lovebox/sections/refresh_helper.dart';
 import 'package:lovebox/sections/search_section.dart';
-import 'package:lovebox/sections/ad_banner_section.dart'; // ✅ Import AdBannerSection
+import 'package:lovebox/sections/ad_banner_section.dart';
 import '../constants/color.dart';
 import '../constants/strings.dart';
 import '../models/product_model.dart';
@@ -21,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isRefreshing = false;
 
-  // ✅ Categories (dynamic now)
   List<String> categories = ["All"];
   String selectedCategory = "All";
 
@@ -38,22 +36,22 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // ✅ Setup scroll listener
+  // Scroll listener for infinite scroll refresh
   void _setupScrollListener() {
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
               _scrollController.position.maxScrollExtent - 50 &&
           !_isRefreshing) {
-        _refreshProducts();
+        _refreshBackendData();
       }
     });
   }
 
-  // ✅ Load products & extract categories dynamically
+  // Load products & extract categories
   Future<List<ProductModel>> _loadProducts() async {
     final products = await ProductService().getProducts();
 
-    // Extract unique categories from products
+    // Extract categories dynamically
     final uniqueCategories = <String>{};
     for (var product in products) {
       if (product.category?.name != null && product.category!.name.isNotEmpty) {
@@ -68,31 +66,33 @@ class _HomeScreenState extends State<HomeScreen> {
     return products;
   }
 
-  // ✅ Refresh products function
-  Future<void> _refreshProducts() async {
+  // Backend-only refresh
+  Future<void> _refreshBackendData() async {
     if (_isRefreshing) return;
 
     setState(() {
       _isRefreshing = true;
     });
 
-    await RefreshHelper.refreshProducts(
-      context: context,
-      refreshFunction: () async {
-        setState(() {
-          _productsFuture = _loadProducts();
-        });
-      },
-    );
+    try {
+      // Reload products from backend
+      _productsFuture = _loadProducts();
+      await _productsFuture;
+      await Future.delayed(
+        const Duration(milliseconds: 300),
+      ); // Optional smooth delay
+    } catch (e) {
+      debugPrint("Backend refresh failed: $e");
+    }
 
     setState(() {
       _isRefreshing = false;
     });
   }
 
-  // ✅ Pull to refresh
+  // Pull-to-refresh triggers backend refresh
   Future<void> _onRefresh() async {
-    await _refreshProducts();
+    await _refreshBackendData();
   }
 
   @override
@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ✅ Dynamic Categories
+              // Categories
               CategorySection(
                 categories: categories,
                 selectedCategory: selectedCategory,
@@ -131,20 +131,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   });
                 },
               ),
-
               const SizedBox(height: 20),
 
-              // ✅ Search Bar
+              // Search
               const SearchSection(),
-
               const SizedBox(height: 20),
 
-              // ✅ Ad Banner Section (Added here)
+              // Ad Banner
               const AdBannerSection(),
-
               const SizedBox(height: 24),
 
-              // ✅ Product Grid
+              // Product Grid
               Expanded(
                 child: FutureBuilder<List<ProductModel>>(
                   future: _productsFuture,
@@ -197,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }
 
-                    // ✅ Filter by category
+                    // Filter by category
                     final products =
                         selectedCategory == "All"
                             ? snapshot.data!

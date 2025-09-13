@@ -57,6 +57,7 @@ class _AdBannerSectionState extends State<AdBannerSection> {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 200,
+      width: double.infinity, // ✅ full width
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -69,14 +70,17 @@ class _AdBannerSectionState extends State<AdBannerSection> {
             },
             itemBuilder: (context, index) {
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 8,
+                ), // ✅ smaller horizontal margin
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.2),
                       blurRadius: 8,
-                      offset: const Offset(0, 4),
+                      offset: const Offset(0, 0),
                     ),
                   ],
                 ),
@@ -114,13 +118,12 @@ class _AdBannerSectionState extends State<AdBannerSection> {
                 (index) => AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentPage == index ? 16 : 8,
+                  width: _currentPage == index ? 16 : 6,
                   height: 8,
                   decoration: BoxDecoration(
                     color:
                         _currentPage == index
-                            ? AppColors
-                                .primary // ✅ using your primary color
+                            ? AppColors.primary
                             : Colors.grey.shade400,
                     borderRadius: BorderRadius.circular(8),
                   ),
