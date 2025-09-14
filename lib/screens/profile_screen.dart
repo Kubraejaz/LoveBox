@@ -3,7 +3,6 @@ import '../constants/color.dart';
 import '../services/local_storage.dart';
 import '../models/user_model.dart';
 import 'login_screen.dart';
-// ✅ still reuse helper
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -30,8 +29,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // ✅ Refresher for profile
   Future<void> _refreshProfile() async {
-    // ✅ refresh silently (no snackbar)
     await _loadUser();
     await Future.delayed(const Duration(milliseconds: 500));
   }
@@ -81,10 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 2),
               Text(
                 _user?.email ?? "guest@example.com",
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textGrey,
-                ),
+                style: const TextStyle(fontSize: 15, color: AppColors.textGrey),
               ),
               const SizedBox(height: 20),
 
@@ -98,9 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 await LocalStorage.resetNavIndex();
                 if (!mounted) return;
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (_) => const LoginScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
                   (route) => false,
                 );
               }),

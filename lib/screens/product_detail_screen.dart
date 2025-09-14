@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lovebox/constants/color.dart';
 import 'package:lovebox/constants/strings.dart';
-import 'package:lovebox/sections/refresh_helper.dart';
 import 'package:lovebox/utils/snackbar_helper.dart';
 import 'package:lovebox/services/cart_service.dart';
 import '../models/product_model.dart';
@@ -23,15 +22,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return price;
   }
 
+  // ✅ Refresher without SnackBar
   Future<void> _refreshProduct() async {
-    await RefreshHelper.refreshProducts(
-      context: context,
-      refreshFunction: () async {
-        setState(() {
-          // Just reset state to simulate refresh (no API call here)
-        });
-      },
-    );
+    // simulate refresh (later replace with API call if needed)
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override

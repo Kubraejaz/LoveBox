@@ -70,10 +70,7 @@ class _AdBannerSectionState extends State<AdBannerSection> {
             },
             itemBuilder: (context, index) {
               return Container(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 8,
-                ), // ✅ smaller horizontal margin
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
@@ -91,7 +88,11 @@ class _AdBannerSectionState extends State<AdBannerSection> {
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, progress) {
                       if (progress == null) return child;
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary, // ✅ purple loader
+                        ),
+                      );
                     },
                     errorBuilder:
                         (context, error, stackTrace) => Container(
@@ -123,8 +124,9 @@ class _AdBannerSectionState extends State<AdBannerSection> {
                   decoration: BoxDecoration(
                     color:
                         _currentPage == index
-                            ? AppColors.primary
-                            : Colors.grey.shade400,
+                            ? AppColors
+                                .primary // ✅ active dot
+                            : Colors.grey.shade400, // inactive dot
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),

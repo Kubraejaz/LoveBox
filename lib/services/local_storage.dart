@@ -6,7 +6,6 @@ class LocalStorage {
   // ------------------- USER -------------------
   static Future<void> saveUser(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
-    // ✅ ek hi key 'user' me full JSON save hoga
     await prefs.setString('user', jsonEncode(user.toJson()));
   }
 
@@ -25,7 +24,7 @@ class LocalStorage {
 
   static Future<void> clearUser() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user'); // ✅ clear full user
+    await prefs.remove('user');
     await prefs.remove('navIndex');
   }
 
@@ -68,6 +67,22 @@ class LocalStorage {
   static Future<void> clearCart(String userId) async {
     final prefs = await SharedPreferences.getInstance();
     String key = "cart_$userId";
+    await prefs.remove(key);
+  }
+
+  // ------------------- GENERIC STORAGE -------------------
+  static Future<void> setString(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  }
+
+  static Future<String?> getString(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
+  }
+
+  static Future<void> removeKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
     await prefs.remove(key);
   }
 }
