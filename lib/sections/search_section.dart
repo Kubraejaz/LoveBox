@@ -3,7 +3,12 @@ import '../constants/color.dart';
 import '../constants/strings.dart';
 
 class SearchSection extends StatelessWidget {
-  const SearchSection({super.key});
+  final ValueChanged<String> onSearchChanged; // ✅ callback
+
+  const SearchSection({
+    super.key,
+    required this.onSearchChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -12,10 +17,11 @@ class SearchSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade500, width: 1),
+        border: Border.all(color: Colors.grey.shade400, width: 1),
       ),
-      child: const TextField(
-        decoration: InputDecoration(
+      child: TextField(
+        onChanged: onSearchChanged, // ✅ send query upwards
+        decoration: const InputDecoration(
           hintText: AppStrings.searchHint,
           hintStyle: TextStyle(color: Colors.grey),
           border: InputBorder.none,

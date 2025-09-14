@@ -17,8 +17,9 @@ class ProductGridSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
-      controller: scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
+      // These properties make it work inside SingleChildScrollView
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: products.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
