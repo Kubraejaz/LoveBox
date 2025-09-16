@@ -1,65 +1,104 @@
-import 'package:lovebox/services/local_storage.dart';
-import '../models/user_model.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../models/cart_item.dart';
+import '../models/api_response.dart';
+import '../services/auth_service.dart';
+import '../constants/api_endpoints.dart';
 
 class CartService {
-  // ✅ Singleton instance
-  static final CartService _instance = CartService._internal();
-  factory CartService() => _instance;
-  CartService._internal();
+  // Add item to cart
+  static Future<ApiResponse<CartItem>> addToCart(int productId, int quantity) async {
+    try {
+      final token = await AuthService.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse<CartItem>(
+          success: false,
+          message: 'Login required',
+          statusCode: 401,
+        );
+      }
 
-  List<Map<String, dynamic>> _cartItems = [];
-  String? _userId;
+      final response = await http.post(
+        Uri.parse(ApiEndpoints.addToCart),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'product_id': productId,
+          'quantity': quantity,
+        }),
+      );
 
-  // ✅ Load cart for the currently logged-in user
-  Future<void> loadCart() async {
-    final UserModel? user = await LocalStorage.getUser(); // ✅ get UserModel
-    _userId = user?.id;
-
-    if (_userId != null && _userId!.isNotEmpty) {
-      _cartItems = await LocalStorage.getCart(_userId!) ?? [];
-    } else {
-      _cartItems = [];
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        final cartItem = CartItem.fromJson(data['cart_item']);
+        return ApiResponse<CartItem>(
+          success: true,
+          message: data['message'] ?? 'Item added to cart',
+          data: cartItem,
+          statusCode: response.statusCode,
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        return ApiResponse<CartItem>(
+          success: false,
+          message: errorData['message'] ?? 'Failed to add item',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      return ApiResponse<CartItem>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
     }
   }
 
-  List<Map<String, dynamic>> get cartItems => _cartItems;
+  // Get cart items
+  static Future<ApiResponse<List<CartItem>>> getCartItems() async {
+    try {
+      final token = await AuthService.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse<List<CartItem>>(
+          success: false,
+          message: 'Login required',
+          statusCode: 401,
+        );
+      }
 
-  // ✅ Add product (unique by "id") and save
-  Future<bool> addItem(Map<String, dynamic> product) async {
-    if (_userId == null || _userId!.isEmpty) return false;
+      final response = await http.get(
+        Uri.parse(ApiEndpoints.viewCart),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
-    final exists = _cartItems.any((item) => item["id"] == product["id"]);
-
-    if (exists) {
-      return false; // already exists
-    } else {
-      _cartItems.add(product);
-      await LocalStorage.saveCart(_userId!, _cartItems);
-      return true;
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        final cartItems = data.map((e) => CartItem.fromJson(e)).toList();
+        return ApiResponse<List<CartItem>>(
+          success: true,
+          message: 'Cart loaded successfully',
+          data: cartItems,
+          statusCode: response.statusCode,
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        return ApiResponse<List<CartItem>>(
+          success: false,
+          message: errorData['message'] ?? 'Failed to load cart',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      return ApiResponse<List<CartItem>>(
+        success: false,
+        message: 'Network error: ${e.toString()}',
+      );
     }
-  }
-
-  // ✅ Remove item and save
-  Future<void> removeItem(int index) async {
-    if (_userId == null || _userId!.isEmpty) return;
-
-    if (index >= 0 && index < _cartItems.length) {
-      _cartItems.removeAt(index);
-      await LocalStorage.saveCart(_userId!, _cartItems);
-    }
-  }
-
-  // ✅ Clear cart for current user
-  Future<void> clearCart() async {
-    if (_userId == null || _userId!.isEmpty) return;
-
-    _cartItems.clear();
-    await LocalStorage.clearCart(_userId!);
-  }
-
-  // ✅ Reset when a new user logs in → load cart instead of clearing
-  Future<void> resetForNewUser(String userId) async {
-    _userId = userId;
-    _cartItems = await LocalStorage.getCart(userId) ?? [];
   }
 }

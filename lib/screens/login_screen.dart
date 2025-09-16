@@ -51,12 +51,14 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200 &&
           data['token'] != null &&
           data['user'] != null) {
-        final user = UserModel.fromJson({
-          ...data['user'],
-          "token": data['token'],
-        });
+        final token = data['token'] as String;
+        final userMap = Map<String, dynamic>.from(data['user']);
 
-        // ✅ Save user info using updated method
+        // ✅ Save the token separately for authentication checks
+        await LocalStorage.saveAuthToken(token);
+
+        // ✅ Store the user profile (including token for convenience if your model needs it)
+        final user = UserModel.fromJson({...userMap, 'token': token});
         await LocalStorage.saveUser(user);
 
         // ✅ Reset nav index to Home on fresh login
@@ -69,7 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
           data['message'] ?? AppStrings.loginSuccess,
         );
 
-        // ✅ Always go to Home (BottomNavBarScreen index 0)
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => const BottomNavBarScreen(initialIndex: 0),
@@ -77,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
           (Route<dynamic> route) => false,
         );
       } else {
-        String errorMessage = data['message'] ?? AppStrings.loginFailed;
+        final errorMessage = data['message'] ?? AppStrings.loginFailed;
         SnackbarHelper.showError(context, errorMessage);
       }
     } catch (e) {
@@ -92,167 +93,156 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 80),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    AppStrings.welcomeBack,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
-                    ),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 80),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  AppStrings.welcomeBack,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
                   ),
                 ),
-                const SizedBox(height: 40),
+              ),
+              const SizedBox(height: 40),
 
-                // Email Field
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.email,
-                    prefixIcon: const Icon(
-                      Icons.email,
-                      color: AppColors.textGrey,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    labelStyle: const TextStyle(color: AppColors.textGrey),
-                    filled: true,
-                    fillColor: AppColors.inputFill,
+              // Email Field
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: AppStrings.email,
+                  prefixIcon: const Icon(Icons.email, color: AppColors.textGrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  labelStyle: const TextStyle(color: AppColors.textGrey),
+                  filled: true,
+                  fillColor: AppColors.inputFill,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Password Field
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: AppStrings.password,
+                  prefixIcon: const Icon(Icons.lock, color: AppColors.textGrey),
+                  suffixIcon:
+                      const Icon(Icons.visibility, color: AppColors.textGrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  labelStyle: const TextStyle(color: AppColors.textGrey),
+                  filled: true,
+                  fillColor: AppColors.inputFill,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: () {
+                    // TODO: Forgot Password Logic
+                  },
+                  child: const Text(
+                    AppStrings.forgotPassword,
+                    style: TextStyle(color: AppColors.primary, fontSize: 14),
                   ),
                 ),
-                const SizedBox(height: 20),
+              ),
 
-                // Password Field
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.password,
-                    prefixIcon: const Icon(
-                      Icons.lock,
-                      color: AppColors.textGrey,
-                    ),
-                    suffixIcon: const Icon(
-                      Icons.visibility,
-                      color: AppColors.textGrey,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    labelStyle: const TextStyle(color: AppColors.textGrey),
-                    filled: true,
-                    fillColor: AppColors.inputFill,
+              const SizedBox(height: 25),
+
+              // Login Button
+              GestureDetector(
+                onTap: _isLoading ? null : _loginUser,
+                child: Container(
+                  width: double.infinity,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                  child: Center(
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            AppStrings.loginButton,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
-                const SizedBox(height: 8),
+              ),
 
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
+              const SizedBox(height: 25),
+
+              const Text(
+                AppStrings.orContinue,
+                style: TextStyle(color: AppColors.textLightGrey),
+              ),
+              const SizedBox(height: 15),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _socialButton(image: 'assets/images/search.png'),
+                  const SizedBox(width: 12),
+                  _socialButton(icon: Icons.apple, color: AppColors.textDark),
+                  const SizedBox(width: 12),
+                  _socialButton(
+                    icon: Icons.facebook,
+                    color: AppColors.facebookBlue,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 25),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    AppStrings.createAccountLogin,
+                    style: TextStyle(
+                      color: AppColors.textLightGrey,
+                      fontSize: 16,
+                    ),
+                  ),
+                  GestureDetector(
                     onTap: () {
-                      // TODO: Add Forgot Password Logic
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SignupScreen(),
+                        ),
+                      );
                     },
                     child: const Text(
-                      AppStrings.forgotPassword,
-                      style: TextStyle(color: AppColors.primary, fontSize: 14),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // Login Button
-                GestureDetector(
-                  onTap: _isLoading ? null : _loginUser,
-                  child: Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                    child: Center(
-                      child: _isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                          : const Text(
-                              AppStrings.loginButton,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                const Text(
-                  AppStrings.orContinue,
-                  style: TextStyle(color: AppColors.textLightGrey),
-                ),
-                const SizedBox(height: 15),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _socialButton(image: 'assets/images/search.png'),
-                    const SizedBox(width: 12),
-                    _socialButton(icon: Icons.apple, color: AppColors.textDark),
-                    const SizedBox(width: 12),
-                    _socialButton(
-                      icon: Icons.facebook,
-                      color: AppColors.facebookBlue,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 25),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      AppStrings.createAccountLogin,
+                      AppStrings.signUp,
                       style: TextStyle(
-                        color: AppColors.textLightGrey,
+                        color: AppColors.primary,
                         fontSize: 16,
+                        decoration: TextDecoration.underline,
+                        decorationColor: AppColors.primary,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SignupScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        AppStrings.signUp,
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 16,
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
+            ],
           ),
         ),
       ),
