@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lovebox/constants/color.dart';
 import 'package:lovebox/screens/login_screen.dart';
 import 'package:lovebox/screens/bottom_navbar_screen.dart';
 import 'package:lovebox/services/local_storage.dart';
@@ -37,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 5));
 
     final loggedIn = await LocalStorage.isLoggedIn();
     if (!mounted) return;
@@ -81,7 +80,8 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      boxShadow: [
+                      color: Colors.white24,
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black26,
                           blurRadius: 12,
@@ -89,7 +89,12 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ],
                     ),
-                    child: Icon(Icons.favorite, color: Colors.white, size: 120),
+                    padding: const EdgeInsets.all(16), // smaller padding
+                    child: const Icon(
+                      Icons.card_giftcard, // 🎁 Gift box icon
+                      color: Colors.white,
+                      size: 80, // smaller icon
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
