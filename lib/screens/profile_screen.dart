@@ -83,9 +83,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildTile(Icons.shopping_bag, "My Orders", () {}),
               _buildTile(Icons.settings, "Settings", () {}),
               _buildTile(Icons.logout, "Logout", () async {
+                // ✅ Clear all user-related data
                 await LocalStorage.clearUser();
+                await LocalStorage.clearAuthToken(); // important
                 await LocalStorage.resetNavIndex();
+
                 if (!mounted) return;
+
+                // ✅ Navigate to LoginScreen and remove all previous routes
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
                   (route) => false,

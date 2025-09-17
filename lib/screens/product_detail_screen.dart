@@ -21,7 +21,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isAdding = false;
   int _quantity = 1;
 
-  /// Show login dialog if user is not authenticated
   void _showLoginDialog() {
     showDialog(
       context: context,
@@ -55,7 +54,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  /// Add product to cart via API
   Future<void> _addToCart() async {
     final token = await LocalStorage.getAuthToken();
     if (token == null || token.isEmpty) {
@@ -85,7 +83,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
       final data = jsonDecode(response.body);
 
-      // ✅ Handle status codes properly
       if (response.statusCode == 201) {
         SnackbarHelper.showSuccess(
           context,
@@ -99,8 +96,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       } else {
         SnackbarHelper.showError(
           context,
-          data['message'] ??
-              "Unexpected error (${response.statusCode}). Please try again.",
+          data['message'] ?? "Unexpected error (${response.statusCode})",
         );
       }
     } catch (e) {
@@ -304,9 +300,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ElevatedButton(
-                onPressed: _isAdding ? null : _addToCart,
+                onPressed:
+                    _isAdding ? () {} : _addToCart, // button stays enabled
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.primary, // color unchanged
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
