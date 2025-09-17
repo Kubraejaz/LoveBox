@@ -22,17 +22,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUser() async {
     final user = await LocalStorage.getUser();
-    if (mounted) {
-      setState(() {
-        _user = user;
-      });
-    }
+    if (mounted) setState(() => _user = user);
   }
 
-  // ✅ Refresher for profile
   Future<void> _refreshProfile() async {
     await _loadUser();
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 400));
   }
 
   @override
@@ -83,13 +78,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: const TextStyle(fontSize: 15, color: AppColors.textGrey),
               ),
               const SizedBox(height: 20),
-
-              // Profile Actions
-              _buildProfileTile(Icons.edit, "Edit Profile", () {}),
-              _buildProfileTile(Icons.lock, "Change Password", () {}),
-              _buildProfileTile(Icons.shopping_bag, "My Orders", () {}),
-              _buildProfileTile(Icons.settings, "Settings", () {}),
-              _buildProfileTile(Icons.logout, "Logout", () async {
+              _buildTile(Icons.edit, "Edit Profile", () {}),
+              _buildTile(Icons.lock, "Change Password", () {}),
+              _buildTile(Icons.shopping_bag, "My Orders", () {}),
+              _buildTile(Icons.settings, "Settings", () {}),
+              _buildTile(Icons.logout, "Logout", () async {
                 await LocalStorage.clearUser();
                 await LocalStorage.resetNavIndex();
                 if (!mounted) return;
@@ -98,8 +91,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   (route) => false,
                 );
               }),
-
-              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -107,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileTile(IconData icon, String title, VoidCallback onTap) {
+  Widget _buildTile(IconData icon, String title, VoidCallback onTap) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       elevation: 4,
