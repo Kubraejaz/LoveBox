@@ -9,11 +9,12 @@ class CartItem {
     required this.quantity,
   });
 
+  /// Build from server JSON (safe for String/int mix)
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      id: json['id'] ?? 0,
-      productId: json['product_id'] ?? 0,
-      quantity: json['quantity'] ?? 0,
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      productId: int.tryParse(json['product_id'].toString()) ?? 0,
+      quantity: int.tryParse(json['quantity'].toString()) ?? 0,
     );
   }
 

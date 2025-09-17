@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:lovebox/constants/color.dart';
 import 'package:lovebox/constants/strings.dart';
+import 'package:lovebox/constants/api_endpoints.dart';
 import 'package:lovebox/utils/snackbar_helper.dart';
 import '../models/product_model.dart';
 import '../services/local_storage.dart';
@@ -18,7 +21,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isAdding = false;
   int _quantity = 1;
 
-  /// ✅ Prompt user to login if no token
+  /// Show login dialog if user is not authenticated
   void _showLoginDialog() {
     showDialog(
       context: context,
@@ -52,7 +55,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  /// ✅ Add to cart after checking only the saved auth token
+  /// Add product to cart via API
   Future<void> _addToCart() async {
     final token = await LocalStorage.getAuthToken();
     if (token == null || token.isEmpty) {
@@ -68,26 +71,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     setState(() => _isAdding = true);
 
     try {
-      // cart is stored per-user (token acts as user key)
-      final cart = await LocalStorage.getCart(token);
-      final index = cart.indexWhere(
-        (item) => item['productId'] == widget.product.id,
+      final response = await http.post(
+        Uri.parse(ApiEndpoints.addToCart),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'product_id': widget.product.id,
+          'quantity': _quantity,
+        }),
       );
 
-      if (index >= 0) {
-        cart[index]['quantity'] += _quantity;
-      } else {
-        cart.add({
-          'productId': widget.product.id,
-          'name': widget.product.name,
-          'price': widget.product.price,
-          'image': widget.product.image ?? '',
-          'quantity': _quantity,
-        });
-      }
+      final data = jsonDecode(response.body);
 
-      await LocalStorage.saveCart(token, cart);
-      SnackbarHelper.showSuccess(context, "Item added to cart");
+      // ✅ Handle status codes properly
+      if (response.statusCode == 201) {
+        SnackbarHelper.showSuccess(
+          context,
+          data['message'] ?? "Item added to cart!",
+        );
+      } else if (response.statusCode == 422) {
+        SnackbarHelper.showError(
+          context,
+          data['error'] ?? "Item is already in your cart.",
+        );
+      } else {
+        SnackbarHelper.showError(
+          context,
+          data['message'] ??
+              "Unexpected error (${response.statusCode}). Please try again.",
+        );
+      }
     } catch (e) {
       SnackbarHelper.showError(context, "Error adding item: $e");
     } finally {
