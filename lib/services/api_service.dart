@@ -57,10 +57,7 @@ class ApiService {
           .post(
             Uri.parse(ApiEndpoints.login),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'email': email,
-              'password': password,
-            }),
+            body: jsonEncode({'email': email, 'password': password}),
           )
           .timeout(const Duration(seconds: 10));
 

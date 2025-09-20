@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lovebox/constants/network_storage.dart';
 import '../constants/color.dart';
 import '../utils/snackbar_helper.dart';
 import '../models/product_model.dart';
 import '../screens/product_detail_screen.dart';
+
 
 class ProductGridSection extends StatelessWidget {
   final List<ProductModel> products;
@@ -17,7 +19,6 @@ class ProductGridSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
-      // These properties make it work inside SingleChildScrollView
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: products.length,
@@ -29,6 +30,10 @@ class ProductGridSection extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         final product = products[index];
+
+        // Use NetworkStorage class to get the full URL
+        final imageUrl = NetworkStorage.getUrl(product.image);
+
         return InkWell(
           onTap: () {
             Navigator.push(
@@ -56,41 +61,17 @@ class ProductGridSection extends StatelessWidget {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(16),
                         ),
-                        child: Image.network(
-                          product.image ?? "https://via.placeholder.com/150",
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (
-                            context,
-                            error,
-                            stackTrace,
-                          ) {
-                            return Container(
-                              width: double.infinity,
-                              height: double.infinity,
-                              color: Colors.grey[200],
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.broken_image,
-                                    size: 40,
-                                    color: Colors.grey,
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    "Image not available",
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                        child: imageUrl.isNotEmpty
+                            ? Image.network(
+                                imageUrl,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return _imageErrorWidget();
+                                },
+                              )
+                            : _imageErrorWidget(),
                       ),
                       Positioned(
                         top: 9,
@@ -99,15 +80,11 @@ class ProductGridSection extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(
-                              0.9,
-                            ),
+                            color: Colors.white.withOpacity(0.9),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(
-                                  0.1,
-                                ),
+                                color: Colors.black.withOpacity(0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -168,6 +145,25 @@ class ProductGridSection extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _imageErrorWidget() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.grey[200],
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.broken_image, size: 40, color: Colors.grey),
+          SizedBox(height: 4),
+          Text(
+            "Image not available",
+            style: TextStyle(fontSize: 10, color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 }

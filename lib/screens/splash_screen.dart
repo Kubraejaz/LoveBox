@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lovebox/screens/login_screen.dart';
+import 'package:lovebox/screens/onboarding_screen.dart';
+import 'package:lovebox/screens/signup_screen.dart';
 import 'package:lovebox/screens/bottom_navbar_screen.dart';
 import 'package:lovebox/services/local_storage.dart';
 
@@ -32,24 +33,34 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward();
-    _navigate();
+    _decideNextScreen();
   }
 
-  Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 5));
-
-    final loggedIn = await LocalStorage.isLoggedIn();
+  Future<void> _decideNextScreen() async {
+    // Keep splash for at least 2 seconds
+    await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder:
-            (_) =>
-                loggedIn
-                    ? const BottomNavBarScreen(initialIndex: 0)
-                    : const LoginScreen(),
-      ),
-    );
+    final bool loggedIn = await LocalStorage.isLoggedIn();
+    final bool seenOnboarding =
+        (await LocalStorage.getString('seenOnboarding')) == 'true';
+
+    Widget next;
+    if (loggedIn) {
+      // ✅ User has a saved token and user JSON
+      next = const BottomNavBarScreen();
+    } else if (seenOnboarding) {
+      // ✅ Onboarding seen, but not logged in
+      next = const SignupScreen(); // or LoginScreen if you have it
+    } else {
+      // ✅ First-time user
+      next = const OnboardingScreen();
+    }
+
+    if (!mounted) return;
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => next));
   }
 
   @override
@@ -72,64 +83,27 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ScaleTransition(
-                  scale: _scale,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white24,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 12,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
+            child: ScaleTransition(
+              scale: _scale,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white24,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
                     ),
-                    padding: const EdgeInsets.all(16), // smaller padding
-                    child: const Icon(
-                      Icons.card_giftcard, // 🎁 Gift box icon
-                      color: Colors.white,
-                      size: 80, // smaller icon
-                    ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                FadeTransition(
-                  opacity: _fade,
-                  child: Text(
-                    "LoveBox",
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 2,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 8,
-                          color: Colors.black26,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                  ),
+                child: const Icon(
+                  Icons.card_giftcard,
+                  color: Colors.white,
+                  size: 80,
                 ),
-                const SizedBox(height: 8),
-                FadeTransition(
-                  opacity: _fade,
-                  child: const Text(
-                    "Your favorite gifting app",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

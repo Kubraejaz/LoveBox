@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import '../constants/api_endpoints.dart';
+import 'package:lovebox/constants/network_storage.dart';
+import 'package:provider/provider.dart';
 import '../constants/color.dart';
-import '../models/cart_item.dart';
-import '../services/local_storage.dart';
-import '../utils/snackbar_helper.dart';
-import 'login_screen.dart';
+import '../providers/cart_provider.dart';
+import '../screens/login_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -16,50 +13,12 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  List<CartItem> cartItems = [];
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-    _loadCart();
-  }
-
-  Future<void> _loadCart() async {
-    setState(() => _isLoading = true);
-    final token = await LocalStorage.getAuthToken();
-    if (token == null || token.isEmpty) {
-      setState(() => _isLoading = false);
-      _showLoginDialog();
-      return;
-    }
-
-    try {
-      final url = Uri.parse(ApiEndpoints.viewCart);
-      final response = await http.get(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> rawList = jsonDecode(response.body);
-        setState(() {
-          cartItems = rawList
-              .map((e) => CartItem.fromJson(e as Map<String, dynamic>))
-              .toList();
-          _isLoading = false;
-        });
-      } else {
-        SnackbarHelper.showError(
-          context,
-          'Failed to load cart. Status: ${response.statusCode}',
-        );
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      SnackbarHelper.showError(context, 'Error loading cart: $e');
-      setState(() => _isLoading = false);
-    }
+    // Fetch cart items safely after first frame
+    Future.microtask(() =>
+        Provider.of<CartProvider>(context, listen: false).fetchCartItems());
   }
 
   void _showLoginDialog() {
@@ -74,47 +33,26 @@ class _CartScreenState extends State<CartScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+            ),
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
-              ).then((_) => _loadCart());
+              ).then((_) =>
+                  Provider.of<CartProvider>(context, listen: false)
+                      .fetchCartItems());
             },
-            child: const Text('Login', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Login',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _removeItem(CartItem item) async {
-    final token = await LocalStorage.getAuthToken();
-    if (token == null) return;
-
-    setState(() => _isLoading = true);
-    try {
-      final url = Uri.parse('${ApiEndpoints.baseUrl}/cart/${item.id}');
-      final response = await http.delete(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        SnackbarHelper.showSuccess(context, "Item removed");
-        _loadCart();
-      } else {
-        SnackbarHelper.showError(
-          context,
-          "Failed to remove item. Status: ${response.statusCode}",
-        );
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      SnackbarHelper.showError(context, "Error removing item: $e");
-      setState(() => _isLoading = false);
-    }
   }
 
   @override
@@ -122,74 +60,78 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          "My Cart",
-          style: TextStyle(color: AppColors.primary),
-        ),
+        title:
+            const Text("My Cart", style: TextStyle(color: AppColors.primary)),
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(
+      body: Consumer<CartProvider>(
+        builder: (context, cartProvider, child) {
+          if (cartProvider.isLoading) {
+            return const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          : cartItems.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.shopping_cart_outlined,
-                          size: 64, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Your cart is empty",
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
-                      ),
-                    ],
+            );
+          }
+
+          if (cartProvider.cartItems.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.shopping_cart_outlined,
+                      size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  const Text("Your cart is empty",
+                      style: TextStyle(fontSize: 18, color: Colors.grey)),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: cartProvider.cartItems.length,
+            itemBuilder: (context, index) {
+              final item = cartProvider.cartItems[index];
+
+              return Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 3,
+                margin: const EdgeInsets.only(bottom: 16),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(12),
+                  leading: CircleAvatar(
+                    radius: 30,
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    backgroundImage: NetworkImage(
+                      NetworkStorage.getUrl(item.productImage),
+                    ),
                   ),
-                )
-              : ListView.builder(
-                  itemCount: cartItems.length,
-                  padding: const EdgeInsets.all(16),
-                  itemBuilder: (context, index) {
-                    final item = cartItems[index];
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      elevation: 3,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.primary,
-                          radius: 30,
-                          child: Text(
-                            '${item.productId}',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        title: Text(
-                          'Product ID: ${item.productId}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        subtitle: Text(
-                          'Quantity: ${item.quantity}',
+                  title: Text(item.productName ?? 'Product ID: ${item.productId}'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Quantity: ${item.quantity}',
                           style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 14,
-                              fontWeight: FontWeight.w500),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.redAccent),
-                          onPressed: () => _removeItem(item),
-                        ),
-                      ),
-                    );
-                  },
+                              fontWeight: FontWeight.w500)),
+                      Text('Stock: ${item.stock ?? 0}',
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 12)),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                    onPressed: () => cartProvider.removeItem(item.id),
+                  ),
                 ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
