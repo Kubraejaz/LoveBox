@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lovebox/screens/onboarding_screen.dart';
-import 'package:lovebox/screens/signup_screen.dart';
+import 'package:lovebox/screens/login_screen.dart'; // <-- use your actual login screen
 import 'package:lovebox/screens/bottom_navbar_screen.dart';
 import 'package:lovebox/services/local_storage.dart';
 
@@ -27,17 +27,15 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _scale = Tween<double>(
-      begin: 0.8,
-      end: 1.2,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _scale = Tween<double>(begin: 0.8, end: 1.2)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward();
     _decideNextScreen();
   }
 
   Future<void> _decideNextScreen() async {
-    // Keep splash for at least 2 seconds
+    // Keep splash visible for 3 seconds
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
@@ -47,20 +45,17 @@ class _SplashScreenState extends State<SplashScreen>
 
     Widget next;
     if (loggedIn) {
-      // ✅ User has a saved token and user JSON
       next = const BottomNavBarScreen();
-    } else if (seenOnboarding) {
-      // ✅ Onboarding seen, but not logged in
-      next = const SignupScreen(); // or LoginScreen if you have it
-    } else {
-      // ✅ First-time user
+    } else if (!seenOnboarding) {
       next = const OnboardingScreen();
+    } else {
+      next = const LoginScreen(); // ✅ go to login when user is logged out
     }
 
     if (!mounted) return;
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => next));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => next),
+    );
   }
 
   @override

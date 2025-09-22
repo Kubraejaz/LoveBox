@@ -2,22 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lovebox/screens/splash_screen.dart';
 import 'package:lovebox/providers/auth_provider.dart';
-import 'package:lovebox/providers/cart_provider.dart'; // ✅ import CartProvider
+import 'package:lovebox/providers/cart_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize providers
   final authProvider = AuthProvider();
-  final cartProvider = CartProvider(); // ✅ initialize CartProvider
+  final cartProvider = CartProvider();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
-        ChangeNotifierProvider<CartProvider>.value(
-          value: cartProvider,
-        ), // ✅ provide CartProvider
+        ChangeNotifierProvider<CartProvider>.value(value: cartProvider),
       ],
       child: const MyApp(),
     ),

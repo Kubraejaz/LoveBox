@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart';
+import 'package:lovebox/screens/login_screen.dart'; // <-- use your actual login screen
 import '../services/local_storage.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -35,13 +35,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   Future<void> _completeOnboarding() async {
-    // Save that onboarding has been seen
     await LocalStorage.setString('seenOnboarding', 'true');
 
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const SignupScreen()),
+      MaterialPageRoute(builder: (_) => const LoginScreen()), // ✅ go to login
     );
   }
 
@@ -52,9 +51,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         controller: _pageController,
         itemCount: onboardingData.length,
         onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          setState(() => _currentIndex = index);
         },
         itemBuilder: (context, index) {
           final data = onboardingData[index];
@@ -83,11 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ],
                     ),
                     padding: const EdgeInsets.all(16),
-                    child: Icon(
-                      data['icon'],
-                      color: Colors.white,
-                      size: 80,
-                    ),
+                    child: Icon(data['icon'], color: Colors.white, size: 80),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -126,9 +119,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: _currentIndex == dotIndex ? 12 : 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _currentIndex == dotIndex
-                              ? Colors.white
-                              : Colors.white38,
+                          color:
+                              _currentIndex == dotIndex
+                                  ? Colors.white
+                                  : Colors.white38,
                         ),
                       ),
                     ),
@@ -141,7 +135,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 40, vertical: 12),
+                          horizontal: 40,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
