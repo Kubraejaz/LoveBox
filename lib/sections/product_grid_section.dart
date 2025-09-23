@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lovebox/constants/color.dart';
 import 'package:lovebox/providers/whishlist_provider.dart';
 import 'package:lovebox/screens/product_detail_screen.dart';
 import 'package:provider/provider.dart';
@@ -30,7 +31,7 @@ class ProductGridSection extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.7,
       ),
       itemBuilder: (context, index) {
         final product = products[index];
@@ -44,13 +45,13 @@ class ProductGridSection extends StatelessWidget {
                   builder: (_) => ProductDetailScreen(product: product),
                 ),
               ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Card(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
-            elevation: 2,
-            shadowColor: Colors.black26,
+            elevation: 4,
+            shadowColor: Colors.black12,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -60,7 +61,7 @@ class ProductGridSection extends StatelessWidget {
                     children: [
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
+                          top: Radius.circular(20),
                         ),
                         child:
                             imageUrl.isNotEmpty
@@ -74,12 +75,13 @@ class ProductGridSection extends StatelessWidget {
                                 )
                                 : _imageErrorWidget(),
                       ),
+                      // Wishlist button
                       Positioned(
-                        top: 8,
-                        right: 8,
+                        top: 10,
+                        right: 10,
                         child: Container(
-                          width: 32,
-                          height: 32,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.9),
                             shape: BoxShape.circle,
@@ -93,12 +95,12 @@ class ProductGridSection extends StatelessWidget {
                           ),
                           child: IconButton(
                             padding: EdgeInsets.zero,
-                            iconSize: 18,
+                            iconSize: 20,
                             icon: Icon(
                               wishlistProvider.isInWishlist(product.id)
                                   ? Icons.favorite
                                   : Icons.favorite_border,
-                              color: Colors.red,
+                              color: AppColors.primary,
                             ),
                             onPressed: () async {
                               final token = await LocalStorage.getAuthToken();
@@ -136,16 +138,41 @@ class ProductGridSection extends StatelessWidget {
                           ),
                         ),
                       ),
+                      // Optional: Price badge
+                      Positioned(
+                        bottom: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.pinkAccent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "PKR ${product.price}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 Expanded(
                   flex: 2,
                   child: Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           product.name,
@@ -157,14 +184,15 @@ class ProductGridSection extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         Text(
-                          "PKR ${product.price}",
+                          product.description ?? "",
                           style: const TextStyle(
-                            color: Colors.pink,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.grey,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

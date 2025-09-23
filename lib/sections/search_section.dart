@@ -5,10 +5,7 @@ import '../constants/strings.dart';
 class SearchSection extends StatelessWidget {
   final ValueChanged<String> onSearchChanged; // ✅ callback
 
-  const SearchSection({
-    super.key,
-    required this.onSearchChanged,
-  });
+  const SearchSection({super.key, required this.onSearchChanged});
 
   @override
   Widget build(BuildContext context) {

@@ -34,97 +34,179 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          "My Profile",
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
-        ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
       body: RefreshIndicator(
         onRefresh: _refreshProfile,
         color: AppColors.primary,
         backgroundColor: Colors.white,
-        child: SingleChildScrollView(
+        child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundImage: NetworkImage(
-                  _user != null
-                      ? "https://static.vecteezy.com/system/resources/thumbnails/029/769/642/small/portrait-of-beautiful-muslim-female-student-online-learning-in-coffee-shop-young-woman-with-hijab-studies-with-laptop-in-cafe-girl-doing-her-homework-free-photo.jpeg"
-                      : "https://via.placeholder.com/150",
+          children: [
+            // ======== Gradient Header with Overlap ========
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Gradient background
+                Container(
+                  height: 180,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withOpacity(0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                _user?.name ?? "Guest User",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                // Angled overlay shape
+                Positioned(
+                  right: -50,
+                  top: -50,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                _user?.email ?? "guest@example.com",
-                style: const TextStyle(fontSize: 15, color: AppColors.textGrey),
-              ),
-              const SizedBox(height: 20),
-              _buildTile(Icons.edit, "Edit Profile", () {}),
-              _buildTile(Icons.lock, "Change Password", () {}),
-              _buildTile(Icons.shopping_bag, "My Orders", () {}),
-              _buildTile(Icons.settings, "Settings", () {}),
-              _buildTile(Icons.logout, "Logout", () async {
-                // ✅ Clear all user-related data
-                await LocalStorage.clearUser();
-                await LocalStorage.clearAuthToken(); // important
-                await LocalStorage.resetNavIndex();
+                // Avatar & info card
+                Positioned(
+                  left: 20,
+                  bottom: -50,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Avatar
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Colors.white,
+                        backgroundImage: NetworkImage(
+                          _user != null
+                              ? "https://static.vecteezy.com/system/resources/thumbnails/029/769/642/small/portrait-of-beautiful-muslim-female-student-online-learning-in-coffee-shop-young-woman-with-hijab-studies-with-laptop-in-cafe-girl-doing-her-homework-free-photo.jpeg"
+                              : "https://via.placeholder.com/150",
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Glass-like info card
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        width: MediaQuery.of(context).size.width * 0.55,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _user?.name ?? "Guest User",
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _user?.email ?? "guest@example.com",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
 
-                if (!mounted) return;
+            const SizedBox(height: 90),
 
-                // ✅ Navigate to LoginScreen and remove all previous routes
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }),
-            ],
-          ),
+            // ======== Action Grid ========
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  _actionCard(Icons.edit, "Edit Profile", () {}),
+                  _actionCard(Icons.lock, "Change Password", () {}),
+                  _actionCard(Icons.shopping_bag, "My Orders", () {}),
+                  _actionCard(Icons.settings, "Setting", () {}),
+                  _actionCard(Icons.contact_support, "Contact Us", () {}),
+                  _actionCard(Icons.logout, "Logout", _logout),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTile(IconData icon, String title, VoidCallback onTap) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primary, size: 26),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textDark,
-          ),
+  Widget _actionCard(IconData icon, String title, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: (MediaQuery.of(context).size.width - 56) / 2,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 18,
-          color: AppColors.textGrey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 28),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+          ],
         ),
-        onTap: onTap,
       ),
+    );
+  }
+
+  Future<void> _logout() async {
+    await LocalStorage.clearUser();
+    await LocalStorage.clearAuthToken();
+    await LocalStorage.resetNavIndex();
+
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
     );
   }
 }

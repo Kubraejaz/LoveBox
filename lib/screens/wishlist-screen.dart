@@ -32,7 +32,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
     final wishlistProvider = Provider.of<WishlistProvider>(context);
 
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      // ✅ Circular loader now uses AppColors.primary
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
     }
 
     final items = wishlistProvider.wishlist;
