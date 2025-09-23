@@ -3,18 +3,17 @@ import 'package:provider/provider.dart';
 import 'package:lovebox/screens/splash_screen.dart';
 import 'package:lovebox/providers/auth_provider.dart';
 import 'package:lovebox/providers/cart_provider.dart';
+import 'package:lovebox/providers/whishlist_provider.dart'; // <-- updated
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final authProvider = AuthProvider();
-  final cartProvider = CartProvider();
-
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
-        ChangeNotifierProvider<CartProvider>.value(value: cartProvider),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => WishlistProvider()), // <-- fixed
       ],
       child: const MyApp(),
     ),
@@ -29,8 +28,16 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'LoveBox',
-      theme: ThemeData(primarySwatch: Colors.pink),
-      home: const SplashScreen(), // First screen
+      theme: ThemeData(
+        primarySwatch: Colors.pink,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          iconTheme: IconThemeData(color: Colors.black),
+          elevation: 0,
+        ),
+      ),
+      home: const SplashScreen(),
     );
   }
 }

@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:lovebox/constants/color.dart';
-import 'package:lovebox/constants/network_storage.dart';
-import 'package:lovebox/constants/strings.dart';
-import 'package:lovebox/constants/api_endpoints.dart';
-import 'package:lovebox/utils/snackbar_helper.dart';
+import 'package:provider/provider.dart';
 import '../models/product_model.dart';
+import '../providers/whishlist_provider.dart';
+import '../constants/color.dart';
+import '../constants/network_storage.dart';
+import '../utils/snackbar_helper.dart';
 import '../services/local_storage.dart';
-import '../screens/login_screen.dart';
+import 'login_screen.dart';
+import '../constants/api_endpoints.dart';
+import 'package:http/http.dart' as http;
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -25,33 +26,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _showLoginDialog() {
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Login Required'),
-            content: const Text('Please login to add items to your cart.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  );
-                },
-                child: const Text(
-                  'Login',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        title: const Text('Login Required'),
+        content: const Text('Please login to add items to your cart or wishlist.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+            child: const Text('Login', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -105,8 +100,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       } else {
         SnackbarHelper.showError(
           context,
-          data?['message'] ??
-              "Unexpected error (status ${response.statusCode})",
+          data?['message'] ?? "Unexpected error (status ${response.statusCode})",
         );
       }
     } catch (e) {
@@ -119,6 +113,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final p = widget.product;
+    final wishlistProvider = Provider.of<WishlistProvider>(context);
     final imageUrl = NetworkStorage.getUrl(p.image);
 
     return Scaffold(
@@ -134,6 +129,37 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         backgroundColor: AppColors.background,
         iconTheme: const IconThemeData(color: AppColors.textDark),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(
+              wishlistProvider.isInWishlist(p.id)
+                  ? Icons.favorite
+                  : Icons.favorite_border,
+              color: Colors.red,
+            ),
+            onPressed: () async {
+              final token = await LocalStorage.getAuthToken();
+              if (token == null || token.isEmpty) {
+                _showLoginDialog();
+                return;
+              }
+
+              try {
+                if (wishlistProvider.isInWishlist(p.id)) {
+                  await wishlistProvider.removeFromWishlist(p);
+                  SnackbarHelper.showSuccess(
+                      context, "${p.name} removed from wishlist");
+                } else {
+                  await wishlistProvider.addToWishlist(p);
+                  SnackbarHelper.showSuccess(
+                      context, "${p.name} added to wishlist");
+                }
+              } catch (e) {
+                SnackbarHelper.showError(context, e.toString());
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -158,16 +184,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   height: 250,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder:
-                      (_, __, ___) => Container(
-                        height: 250,
-                        color: AppColors.brokenImage,
-                        child: const Icon(
-                          Icons.broken_image,
-                          size: 80,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 250,
+                    color: AppColors.brokenImage,
+                    child: const Icon(
+                      Icons.broken_image,
+                      size: 80,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -189,10 +214,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -216,8 +238,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
 
+            const SizedBox(height: 12),
             // Stock & Rating
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -269,7 +291,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ],
                 ),
                 child: Text(
-                  p.description ?? AppStrings.defaultProductDescription,
+                  p.description ?? "No description available.",
                   style: const TextStyle(
                     fontSize: 15,
                     color: AppColors.textGrey,
@@ -279,7 +301,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ✅ Add to Cart Button (fixed)
+            // Add to Cart
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: ElevatedButton(
@@ -287,7 +309,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all(AppColors.primary),
                   foregroundColor: MaterialStateProperty.all(Colors.white),
-                  overlayColor: MaterialStateProperty.all(Colors.transparent),
                   minimumSize: MaterialStateProperty.all(
                     const Size(double.infinity, 55),
                   ),
@@ -298,20 +319,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   elevation: MaterialStateProperty.all(6),
                 ),
-                child:
-                    _isAdding
-                        ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
-                          ),
-                        )
-                        : const Text(
-                          AppStrings.addToCart,
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                child: _isAdding
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 3,
                         ),
+                      )
+                    : const Text(
+                        "Add to Cart",
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
               ),
             ),
             const SizedBox(height: 40),
@@ -337,23 +357,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       child: Column(
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textGrey,
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textGrey)),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
-            ),
-          ),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
         ],
       ),
     );
@@ -377,11 +387,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         children: [
           const Text(
             "Rating",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textGrey,
-            ),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textGrey),
           ),
           const SizedBox(height: 4),
           Row(
@@ -392,10 +398,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Text(
                 rating,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
+                    fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
               ),
             ],
           ),
@@ -429,18 +432,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: Text(
               '$_quantity',
               style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              ),
+                  fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.add, color: AppColors.primary),
-            onPressed:
-                (p.stock == null || _quantity < p.stock!)
-                    ? () => setState(() => _quantity++)
-                    : null,
+            onPressed: (p.stock == null || _quantity < p.stock!)
+                ? () => setState(() => _quantity++)
+                : null,
           ),
         ],
       ),

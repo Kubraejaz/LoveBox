@@ -3,7 +3,7 @@ class ProductModel {
   final String name;
   final String? description;
   final String? sku;
-  final String price; // kept as String because your API returns "10000.00"
+  final String price;
   final int? stock;
   final int? categoryId;
   final double? ratingAvg;
@@ -11,6 +11,8 @@ class ProductModel {
   final String? image;
   final bool? isActive;
   final Category? category;
+
+  bool isFavorite; // 🔹 added
 
   ProductModel({
     required this.id,
@@ -25,9 +27,9 @@ class ProductModel {
     this.image,
     this.isActive,
     this.category,
+    this.isFavorite = false, // default false
   });
 
-  /// Convenience getter so existing code using `product.rating` won't break.
   double? get rating => ratingAvg;
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -39,21 +41,18 @@ class ProductModel {
       price: json['price']?.toString() ?? '0',
       stock: _parseInt(json['stock']),
       categoryId: _parseInt(json['category_id']),
-      ratingAvg:
-          json['rating_avg'] != null
-              ? double.tryParse(json['rating_avg'].toString())
-              : null,
+      ratingAvg: json['rating_avg'] != null
+          ? double.tryParse(json['rating_avg'].toString())
+          : null,
       ratingCount: _parseInt(json['rating_count']),
       image: json['image']?.toString(),
-      isActive:
-          json['is_active'] == null
-              ? null
-              : (json['is_active'] == true ||
-                  json['is_active'].toString() == '1'),
-      category:
-          json['category'] != null
-              ? Category.fromJson(Map<String, dynamic>.from(json['category']))
-              : null,
+      isActive: json['is_active'] == null
+          ? null
+          : (json['is_active'] == true || json['is_active'].toString() == '1'),
+      category: json['category'] != null
+          ? Category.fromJson(Map<String, dynamic>.from(json['category']))
+          : null,
+      isFavorite: json['is_favorite'] == true, // 🔹 set from API if available
     );
   }
 
@@ -71,10 +70,10 @@ class ProductModel {
       'image': image,
       'is_active': isActive,
       'category': category?.toJson(),
+      'is_favorite': isFavorite,
     };
   }
 
-  /// 🔹 Helper method for safe int parsing
   static int? _parseInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;

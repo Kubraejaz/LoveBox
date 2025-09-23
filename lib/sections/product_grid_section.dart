@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:lovebox/providers/whishlist_provider.dart';
+import 'package:lovebox/screens/product_detail_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:lovebox/models/product_model.dart';
+import 'package:lovebox/services/local_storage.dart';
+import 'package:lovebox/utils/snackbar_helper.dart';
 import 'package:lovebox/constants/network_storage.dart';
-import '../constants/color.dart';
-import '../utils/snackbar_helper.dart';
-import '../models/product_model.dart';
-import '../screens/product_detail_screen.dart';
-
 
 class ProductGridSection extends StatelessWidget {
   final List<ProductModel> products;
@@ -18,7 +19,10 @@ class ProductGridSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final wishlistProvider = Provider.of<WishlistProvider>(context);
+
     return GridView.builder(
+      controller: scrollController,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: products.length,
@@ -30,19 +34,16 @@ class ProductGridSection extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         final product = products[index];
-
-        // Use NetworkStorage class to get the full URL
         final imageUrl = NetworkStorage.getUrl(product.image);
 
         return InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(product: product),
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProductDetailScreen(product: product),
+                ),
               ),
-            );
-          },
           borderRadius: BorderRadius.circular(16),
           child: Card(
             shape: RoundedRectangleBorder(
@@ -61,21 +62,21 @@ class ProductGridSection extends StatelessWidget {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(16),
                         ),
-                        child: imageUrl.isNotEmpty
-                            ? Image.network(
-                                imageUrl,
-                                width: double.infinity,
-                                height: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return _imageErrorWidget();
-                                },
-                              )
-                            : _imageErrorWidget(),
+                        child:
+                            imageUrl.isNotEmpty
+                                ? Image.network(
+                                  imageUrl,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (_, __, ___) => _imageErrorWidget(),
+                                )
+                                : _imageErrorWidget(),
                       ),
                       Positioned(
-                        top: 9,
-                        right: 7,
+                        top: 8,
+                        right: 8,
                         child: Container(
                           width: 32,
                           height: 32,
@@ -93,15 +94,44 @@ class ProductGridSection extends StatelessWidget {
                           child: IconButton(
                             padding: EdgeInsets.zero,
                             iconSize: 18,
-                            icon: const Icon(
-                              Icons.favorite_border,
+                            icon: Icon(
+                              wishlistProvider.isInWishlist(product.id)
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
                               color: Colors.red,
                             ),
-                            onPressed: () {
-                              SnackbarHelper.showSuccess(
-                                context,
-                                "${product.name} added to favorites",
-                              );
+                            onPressed: () async {
+                              final token = await LocalStorage.getAuthToken();
+                              if (token == null || token.isEmpty) {
+                                SnackbarHelper.showError(
+                                  context,
+                                  "Please login first",
+                                );
+                                return;
+                              }
+
+                              try {
+                                if (wishlistProvider.isInWishlist(product.id)) {
+                                  await wishlistProvider.removeFromWishlist(
+                                    product,
+                                  );
+                                  SnackbarHelper.showSuccess(
+                                    context,
+                                    "${product.name} removed from wishlist",
+                                  );
+                                } else {
+                                  await wishlistProvider.addToWishlist(product);
+                                  SnackbarHelper.showSuccess(
+                                    context,
+                                    "${product.name} added to wishlist",
+                                  );
+                                }
+                              } catch (_) {
+                                SnackbarHelper.showError(
+                                  context,
+                                  "Failed to update wishlist",
+                                );
+                              }
                             },
                           ),
                         ),
@@ -131,7 +161,7 @@ class ProductGridSection extends StatelessWidget {
                         Text(
                           "PKR ${product.price}",
                           style: const TextStyle(
-                            color: AppColors.primary,
+                            color: Colors.pink,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
