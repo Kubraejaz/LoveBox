@@ -5,6 +5,7 @@ class CartItem {
   final String productImage;
   final int quantity;
   final int stock;
+  final double price;
 
   CartItem({
     required this.id,
@@ -13,17 +14,20 @@ class CartItem {
     required this.productImage,
     required this.quantity,
     required this.stock,
+    required this.price,
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
-    final product = json['product'] ?? {};
+    final product = json['product'] as Map<String, dynamic>? ?? {};
+
     return CartItem(
       id: _parseInt(json['id']) ?? 0,
       productId: _parseInt(json['product_id']) ?? 0,
-      productName: product['name'] ?? '',
-      productImage: product['image'] ?? '',
+      productName: product['name']?.toString() ?? '',
+      productImage: product['image']?.toString() ?? '',
       quantity: _parseInt(json['quantity']) ?? 0,
       stock: _parseInt(product['stock']) ?? 0,
+      price: _parseDouble(product['price']),
     );
   }
 
@@ -36,6 +40,7 @@ class CartItem {
         'name': productName,
         'image': productImage,
         'stock': stock,
+        'price': price,
       },
     };
   }
@@ -45,5 +50,15 @@ class CartItem {
     if (value is int) return value;
     if (value is String) return int.tryParse(value);
     return null;
+  }
+
+  static double _parseDouble(dynamic value) {
+    try {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0.0;
+    } catch (_) {}
+    return 0.0; // fallback
   }
 }

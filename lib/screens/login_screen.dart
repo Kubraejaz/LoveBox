@@ -54,14 +54,11 @@ class _LoginScreenState extends State<LoginScreen> {
         final token = data['token'] as String;
         final userMap = Map<String, dynamic>.from(data['user']);
 
-        // ✅ Save the token separately for authentication checks
         await LocalStorage.saveAuthToken(token);
 
-        // ✅ Store the user profile (including token for convenience if your model needs it)
         final user = UserModel.fromJson({...userMap, 'token': token});
         await LocalStorage.saveUser(user);
 
-        // ✅ Reset nav index to Home on fresh login
         await LocalStorage.resetNavIndex();
 
         if (!mounted) return;
@@ -92,158 +89,203 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 80),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  AppStrings.welcomeBack,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-
-              // Email Field
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: AppStrings.email,
-                  prefixIcon: const Icon(Icons.email, color: AppColors.textGrey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  labelStyle: const TextStyle(color: AppColors.textGrey),
-                  filled: true,
-                  fillColor: AppColors.inputFill,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Password Field
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: AppStrings.password,
-                  prefixIcon: const Icon(Icons.lock, color: AppColors.textGrey),
-                  suffixIcon:
-                      const Icon(Icons.visibility, color: AppColors.textGrey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  labelStyle: const TextStyle(color: AppColors.textGrey),
-                  filled: true,
-                  fillColor: AppColors.inputFill,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: GestureDetector(
-                  onTap: () {
-                    // TODO: Forgot Password Logic
-                  },
-                  child: const Text(
-                    AppStrings.forgotPassword,
-                    style: TextStyle(color: AppColors.primary, fontSize: 14),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              // Login Button
-              GestureDetector(
-                onTap: _isLoading ? null : _loginUser,
-                child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(5.0),
-                  ),
-                  child: Center(
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            AppStrings.loginButton,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              const Text(
-                AppStrings.orContinue,
-                style: TextStyle(color: AppColors.textLightGrey),
-              ),
-              const SizedBox(height: 15),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
                 children: [
-                  _socialButton(image: 'assets/images/search.png'),
-                  const SizedBox(width: 12),
-                  _socialButton(icon: Icons.apple, color: AppColors.textDark),
-                  const SizedBox(width: 12),
-                  _socialButton(
-                    icon: Icons.facebook,
-                    color: AppColors.facebookBlue,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 25),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    AppStrings.createAccountLogin,
-                    style: TextStyle(
-                      color: AppColors.textLightGrey,
-                      fontSize: 16,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SignupScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      AppStrings.signUp,
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 16,
-                        decoration: TextDecoration.underline,
-                        decorationColor: AppColors.primary,
+                  const SizedBox(height: 80),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      AppStrings.welcomeBack,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
                       ),
                     ),
                   ),
+                  const SizedBox(height: 40),
+
+                  // Email Field
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.email,
+                      prefixIcon: const Icon(
+                        Icons.email,
+                        color: AppColors.textGrey,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      labelStyle: const TextStyle(color: AppColors.textGrey),
+                      filled: true,
+                      fillColor: AppColors.inputFill,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Password Field
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.password,
+                      prefixIcon: const Icon(
+                        Icons.lock,
+                        color: AppColors.textGrey,
+                      ),
+                      suffixIcon: const Icon(
+                        Icons.visibility,
+                        color: AppColors.textGrey,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      labelStyle: const TextStyle(color: AppColors.textGrey),
+                      filled: true,
+                      fillColor: AppColors.inputFill,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () {
+                        // TODO: Forgot Password Logic
+                      },
+                      child: const Text(
+                        AppStrings.forgotPassword,
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // Login Button
+                  GestureDetector(
+                    onTap: _isLoading ? null : _loginUser,
+                    child: Container(
+                      width: double.infinity,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(5.0),
+                      ),
+                      child: Center(
+                        child:
+                            _isLoading
+                                ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                                : const Text(
+                                  AppStrings.loginButton,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  const Text(
+                    AppStrings.orContinue,
+                    style: TextStyle(color: AppColors.textLightGrey),
+                  ),
+                  const SizedBox(height: 15),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _socialButton(image: 'assets/images/search.png'),
+                      const SizedBox(width: 12),
+                      _socialButton(
+                        icon: Icons.apple,
+                        color: AppColors.textDark,
+                      ),
+                      const SizedBox(width: 12),
+                      _socialButton(
+                        icon: Icons.facebook,
+                        color: AppColors.facebookBlue,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        AppStrings.createAccountLogin,
+                        style: TextStyle(
+                          color: AppColors.textLightGrey,
+                          fontSize: 16,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SignupScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          AppStrings.signUp,
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 16,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
                 ],
               ),
-              const SizedBox(height: 40),
-            ],
-          ),
+            ),
+
+            // ✅ Top-right cross button
+            Positioned(
+              top: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (_) => const BottomNavBarScreen(initialIndex: 0),
+                    ),
+                    (Route<dynamic> route) => false,
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.black),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -259,9 +301,10 @@ class _LoginScreenState extends State<LoginScreen> {
         border: Border.all(color: AppColors.primary, width: 2.0),
       ),
       child: IconButton(
-        icon: image != null
-            ? Image.asset(image, height: 30)
-            : Icon(icon, color: color, size: 30),
+        icon:
+            image != null
+                ? Image.asset(image, height: 30)
+                : Icon(icon, color: color, size: 30),
         onPressed: () {},
         padding: EdgeInsets.zero,
       ),

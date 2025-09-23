@@ -65,7 +65,7 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary, // ✅ simple solid color
+        backgroundColor: AppColors.primary,
         centerTitle: true,
         elevation: 1,
         title: const Text(
@@ -139,30 +139,37 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ),
                         title: Text(
-                          item.productName ?? 'Product ID: ${item.productId}',
+                          item.productName.isNotEmpty
+                              ? item.productName
+                              : 'Product ID: ${item.productId}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                           ),
                         ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Qty: ${item.quantity}',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              'Qty: ${item.quantity}',
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w500,
                               ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Stock: ${item.stock ?? 0}',
-                                style: const TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              'Stock: ${item.stock}',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              'Price: PKR ${item.price.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                         trailing: IconButton(
                           icon: const Icon(
@@ -176,7 +183,6 @@ class _CartScreenState extends State<CartScreen> {
                   },
                 ),
               ),
-
               // Bottom Checkout Bar
               Container(
                 padding: const EdgeInsets.symmetric(

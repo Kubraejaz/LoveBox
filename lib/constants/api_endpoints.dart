@@ -1,8 +1,8 @@
 class ApiEndpoints {
-  static const String baseUrl = 'http://10.108.72.19:8000/api/v1';
+  static const String baseUrl = 'http://192.168.100.227:8000/api/v1';
 
   // ---------- Auth ----------
-  static const String login    = '$baseUrl/login';
+  static const String login = '$baseUrl/login';
   static const String register = '$baseUrl/register';
 
   // ---------- Products ----------
@@ -10,7 +10,7 @@ class ApiEndpoints {
 
   // ---------- Cart ----------
   static const String addToCart = '$baseUrl/cart/store';
-  static const String viewCart  = '$baseUrl/cart/cart-item';
+  static const String viewCart = '$baseUrl/cart/cart-item';
 
   // ---------- Wishlist ----------
   /// GET:    /wishlist               → fetch all wishlist items

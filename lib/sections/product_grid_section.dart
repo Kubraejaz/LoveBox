@@ -59,6 +59,7 @@ class ProductGridSection extends StatelessWidget {
                   flex: 3,
                   child: Stack(
                     children: [
+                      // Product Image
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(20),
@@ -75,7 +76,42 @@ class ProductGridSection extends StatelessWidget {
                                 )
                                 : _imageErrorWidget(),
                       ),
-                      // Wishlist button
+
+                      // Rating badge (top-left)
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                "${product.ratingAvg ?? 0} / 5",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Wishlist button (top-right)
                       Positioned(
                         top: 10,
                         right: 10,
@@ -138,7 +174,8 @@ class ProductGridSection extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Optional: Price badge
+
+                      // Price badge (bottom-left)
                       Positioned(
                         bottom: 8,
                         left: 8,
