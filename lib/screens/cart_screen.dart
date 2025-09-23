@@ -129,13 +129,17 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(12),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            NetworkStorage.getUrl(item.productImage),
-                            width: 70,
-                            height: 70,
-                            fit: BoxFit.cover,
+                        leading: Container(
+                          width: 70,
+                          height: 90, // Image height increased
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            image: DecorationImage(
+                              image: NetworkImage(
+                                NetworkStorage.getUrl(item.productImage),
+                              ),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         title: Text(
@@ -146,11 +150,13 @@ class _CartScreenState extends State<CartScreen> {
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min, // Remove extra space
                           children: [
-                            const SizedBox(height: 4),
                             Text(
                               'Qty: ${item.quantity}',
                               style: const TextStyle(
