@@ -20,7 +20,13 @@ class _BannerSectionState extends State<BannerSection> {
   @override
   void initState() {
     super.initState();
-    _bannerFuture = BannerService.fetchBanners();
+    // ✅ Fetch banners and print their URLs for debugging
+    _bannerFuture = BannerService.fetchBanners().then((banners) {
+      for (var b in banners) {
+        debugPrint('🔗 Banner image URL: ${b.fullImageUrl}');
+      }
+      return banners;
+    });
   }
 
   void _startAutoScroll(int itemCount) {
@@ -74,39 +80,35 @@ class _BannerSectionState extends State<BannerSection> {
         _startAutoScroll(banners.length);
 
         return SizedBox(
-          height: 200, // 🔹 keep the same height
-          width: screenWidth, // 🔹 full screen width
+          height: 200,
+          width: screenWidth,
           child: Stack(
             alignment: Alignment.bottomCenter,
             children: [
-              // ✅ Wider PageView
               PageView.builder(
                 controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
+                onPageChanged: (index) => setState(() => _currentPage = index),
                 itemCount: banners.length,
                 itemBuilder: (context, index) {
                   final banner = banners[index];
+                  // 👇 Print each URL again when the banner is built
+                  debugPrint('🖼️ Loading banner: ${banner.fullImageUrl}');
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.network(
                       banner.fullImageUrl,
                       fit: BoxFit.cover,
-                      width: screenWidth, // 🔹 fill full width
-                      errorBuilder: (context, error, stackTrace) {
-                        return Image.asset(
-                          'assets/images/banner_placeholder.png',
-                          fit: BoxFit.cover,
-                          width: screenWidth,
-                        );
-                      },
+                      width: screenWidth,
+                      errorBuilder:
+                          (_, __, ___) => Image.asset(
+                            'assets/images/banner_placeholder.png',
+                            fit: BoxFit.cover,
+                            width: screenWidth,
+                          ),
                     ),
                   );
                 },
               ),
-
-              // ✅ Dot indicator
               Positioned(
                 bottom: 12,
                 child: Container(

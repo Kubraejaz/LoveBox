@@ -1,3 +1,5 @@
+import 'package:lovebox/constants/network_storage.dart';
+
 class BannerModel {
   final int id;
   final String title;
@@ -23,5 +25,5 @@ class BannerModel {
   /// Full URL for displaying the banner image.
   /// 👉 Use 10.0.2.2 if running on Android emulator,
   /// or your PC's LAN IP (e.g., 192.168.x.x) for a real device.
-  String get fullImageUrl => 'http://192.168.18.33:8000/storage/$image';
+  String get fullImageUrl =>'${NetworkStorage.baseUrl}$image';
 }
