@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lovebox/constants/color.dart';
+import 'package:lovebox/screens/banner_detail_screen.dart';
 import '../models/banner_model.dart';
 import '../services/banner_service.dart';
 
@@ -20,7 +21,6 @@ class _BannerSectionState extends State<BannerSection> {
   @override
   void initState() {
     super.initState();
-    // ✅ Fetch banners and print their URLs for debugging
     _bannerFuture = BannerService.fetchBanners().then((banners) {
       for (var b in banners) {
         debugPrint('🔗 Banner image URL: ${b.fullImageUrl}');
@@ -39,7 +39,7 @@ class _BannerSectionState extends State<BannerSection> {
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
-      setState(() {}); // refresh dots
+      setState(() {});
     });
   }
 
@@ -58,10 +58,13 @@ class _BannerSectionState extends State<BannerSection> {
       future: _bannerFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return SizedBox(
+          // ✅ Loader color changed to AppColors.primary (purple)
+          return const SizedBox(
             height: 200,
             child: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: CircularProgressIndicator(
+                color: AppColors.primary, // <-- purple loader
+              ),
             ),
           );
         } else if (snapshot.hasError) {
@@ -91,54 +94,50 @@ class _BannerSectionState extends State<BannerSection> {
                 itemCount: banners.length,
                 itemBuilder: (context, index) {
                   final banner = banners[index];
-                  // 👇 Print each URL again when the banner is built
-                  debugPrint('🖼️ Loading banner: ${banner.fullImageUrl}');
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.network(
-                      banner.fullImageUrl,
-                      fit: BoxFit.cover,
-                      width: screenWidth,
-                      errorBuilder:
-                          (_, __, ___) => Image.asset(
-                            'assets/images/banner_placeholder.png',
-                            fit: BoxFit.cover,
-                            width: screenWidth,
-                          ),
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BannerDetailScreen(banner: banner),
+                        ),
+                      );
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        banner.fullImageUrl,
+                        fit: BoxFit.cover,
+                        width: screenWidth,
+                        errorBuilder:
+                            (_, __, ___) => Image.asset(
+                              'assets/images/banner_placeholder.png',
+                              fit: BoxFit.cover,
+                              width: screenWidth,
+                            ),
+                      ),
                     ),
                   );
                 },
               ),
               Positioned(
                 bottom: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(banners.length, (index) {
-                      final isActive = index == _currentPage;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 8,
-                        width: isActive ? 18 : 8,
-                        decoration: BoxDecoration(
-                          color:
-                              isActive
-                                  ? AppColors.primary
-                                  : Colors.grey.shade400,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      );
-                    }),
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(banners.length, (index) {
+                    final isActive = index == _currentPage;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      height: 8,
+                      width: isActive ? 18 : 8,
+                      decoration: BoxDecoration(
+                        color:
+                            isActive ? AppColors.primary : Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    );
+                  }),
                 ),
               ),
             ],
