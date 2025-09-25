@@ -13,13 +13,11 @@ class ApiEndpoints {
   static const String viewCart = '$baseUrl/cart/cart-item';
 
   // ---------- Wishlist ----------
-  /// GET:    /wishlist               → fetch all wishlist items
   static const String wishlist = '$baseUrl/wishlist';
-
-  /// POST:   /wishlist/store         → add a product to wishlist
   static const String addWishlist = '$baseUrl/wishlist/store';
-
-  /// DELETE: /wishlist/delete/{id}   → remove a product from wishlist
-  /// Usage:  '${ApiEndpoints.deleteWishlist}/$productId'
   static const String deleteWishlist = '$baseUrl/wishlist/delete';
+
+  // ---------- Banners ----------
+  /// GET: /banners → fetch all banners
+  static const String banners = '$baseUrl/banners';
 }

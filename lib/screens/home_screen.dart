@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lovebox/sections/category_section.dart';
 import 'package:lovebox/sections/product_grid_section.dart';
 import 'package:lovebox/sections/search_section.dart';
-import 'package:lovebox/sections/ad_banner_section.dart';
+import 'package:lovebox/sections/banner_section.dart';
 import '../constants/color.dart';
 import '../constants/strings.dart';
 import '../models/product_model.dart';
@@ -191,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-                    const AdBannerSection(),
+                    const BannerSection(),
                     const SizedBox(height: 24),
                   ],
 
