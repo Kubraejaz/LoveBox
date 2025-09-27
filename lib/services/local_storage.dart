@@ -69,7 +69,10 @@ class LocalStorage {
   }
 
   // ------------------- CART (Per User) -------------------
-  static Future<void> saveCart(String userId, List<Map<String, dynamic>> cart) async {
+  static Future<void> saveCart(
+    String userId,
+    List<Map<String, dynamic>> cart,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('cart_$userId', jsonEncode(cart));
   }
@@ -118,7 +121,7 @@ class LocalStorage {
   }
 
   // ------------------- CLEAR ALL USER DATA -------------------
-  /// Clears user profile and token.  
+  /// Clears user profile and token.
   /// If you also want to reset nav index or cart, call those methods separately.
   static Future<void> clearAllUserData() async {
     final prefs = await SharedPreferences.getInstance();

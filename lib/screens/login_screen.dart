@@ -10,6 +10,9 @@ import '../services/local_storage.dart';
 import '../models/user_model.dart';
 import '../utils/snackbar_helper.dart';
 
+// ✅ Added import for forgot password screen
+import 'forgot_password_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -153,11 +156,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
 
+                  // ✅ Navigate to Forgot Password Screen
                   Align(
                     alignment: Alignment.centerRight,
                     child: GestureDetector(
                       onTap: () {
-                        // TODO: Forgot Password Logic
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ForgotPasswordScreen(),
+                          ),
+                        );
                       },
                       child: const Text(
                         AppStrings.forgotPassword,
@@ -182,19 +191,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(5.0),
                       ),
                       child: Center(
-                        child:
-                            _isLoading
-                                ? const CircularProgressIndicator(
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                AppStrings.loginButton,
+                                style: TextStyle(
+                                  fontSize: 16,
                                   color: Colors.white,
-                                )
-                                : const Text(
-                                  AppStrings.loginButton,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  fontWeight: FontWeight.bold,
                                 ),
+                              ),
                       ),
                     ),
                   ),
@@ -277,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
                 child: Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.black12,
                     shape: BoxShape.circle,
                   ),
@@ -301,10 +309,9 @@ class _LoginScreenState extends State<LoginScreen> {
         border: Border.all(color: AppColors.primary, width: 2.0),
       ),
       child: IconButton(
-        icon:
-            image != null
-                ? Image.asset(image, height: 30)
-                : Icon(icon, color: color, size: 30),
+        icon: image != null
+            ? Image.asset(image, height: 30)
+            : Icon(icon, color: color, size: 30),
         onPressed: () {},
         padding: EdgeInsets.zero,
       ),
