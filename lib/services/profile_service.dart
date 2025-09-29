@@ -1,14 +1,11 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import '../models/user_model.dart';
 import '../constants/api_endpoints.dart';
 
 class ProfileService {
-  /// Fetch the user profile
-  static Future<UserModel> fetchProfile(String token) async {
-    final url = Uri.parse('${ApiEndpoints.baseUrl}/profile');
-    debugPrint('➡️ GET $url');
+  /// ✅ Fetch the current user's profile
+  static Future<Map<String, dynamic>> fetchProfile(String token) async {
+    final url = Uri.parse(ApiEndpoints.userProfile);
 
     final res = await http.get(
       url,
@@ -18,18 +15,68 @@ class ProfileService {
       },
     );
 
-    debugPrint('⬅️ Status code: ${res.statusCode}');
-    debugPrint('⬅️ Response: ${res.body}');
-
     if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      final userMap = (data['data'] ?? data) as Map<String, dynamic>;
-      return UserModel.fromJson(userMap, token: token);
-    } else if (res.statusCode == 401) {
-      throw Exception('Unauthorized. Token may be invalid or expired.');
-    } else {
-      throw Exception(
-          'Failed to fetch profile: ${res.statusCode} ${res.body}');
+      return jsonDecode(res.body) as Map<String, dynamic>;
     }
+
+    if (res.statusCode == 401) {
+      throw Exception('Unauthorized – please log in again.');
+    }
+
+    throw Exception('Failed to load profile (status ${res.statusCode}): ${res.body}');
+  }
+
+  /// ✅ Update profile details (e.g. name, email, etc.)
+  static Future<bool> updateProfile(
+    String token,
+    Map<String, dynamic> body,
+  ) async {
+    final url = Uri.parse(ApiEndpoints.updateProfile);
+
+    final res = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (res.statusCode != 200) {
+      print('Profile update failed: ${res.statusCode} ${res.body}');
+    }
+
+    return res.statusCode == 200;
+  }
+
+  /// ✅ Update a specific address
+  /// Pass [addressId] if your backend needs it in the URL.
+  static Future<bool> updateAddress(
+    String token,
+    Map<String, dynamic> body, {
+    String? addressId,
+  }) async {
+    final endpoint = (addressId != null && addressId.isNotEmpty)
+        ? '${ApiEndpoints.updateAddress}/$addressId'
+        : ApiEndpoints.updateAddress;
+
+    final url = Uri.parse(endpoint);
+
+    final res = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (res.statusCode != 200) {
+      print('Address update failed: ${res.statusCode} ${res.body}');
+    }
+
+    return res.statusCode == 200;
   }
 }

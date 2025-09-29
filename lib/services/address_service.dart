@@ -1,13 +1,12 @@
-// lib/services/address_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_endpoints.dart';
 import '../models/address_model.dart';
 
 class AddressService {
-  /// Fetch all addresses for the logged-in user
+  /// ✅ Fetch all addresses for the logged-in user
   static Future<List<AddressModel>> fetchUserAddresses(String token) async {
-    final url = Uri.parse('${ApiEndpoints.userProfile}/addresses'); // API endpoint for addresses
+    final url = Uri.parse(ApiEndpoints.fetchAddresses);
 
     final response = await http.get(
       url,
@@ -18,16 +17,32 @@ class AddressService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final body = jsonDecode(response.body);
 
-      // The addresses may be inside data['data']['addresses'] depending on your API
-      final List<dynamic> addressList = (data['data']['addresses'] ?? []);
+      // Handle different possible JSON shapes
+      final List<dynamic> addressList;
+      if (body is List) {
+        addressList = body;
+      } else if (body['data'] is List) {
+        addressList = body['data'];
+      } else if (body['data']?['addresses'] is List) {
+        addressList = body['data']['addresses'];
+      } else {
+        throw Exception('Unexpected address response format');
+      }
 
-      return addressList.map((e) => AddressModel.fromJson(e)).toList();
-    } else if (response.statusCode == 401) {
-      throw Exception('Unauthorized');
-    } else {
-      throw Exception('Failed to fetch addresses: ${response.statusCode} ${response.body}');
+      return addressList
+          .map<AddressModel>((e) => AddressModel.fromJson(e))
+          .toList();
     }
+
+    if (response.statusCode == 401) {
+      throw Exception('Unauthorized – please log in again.');
+    }
+
+    throw Exception(
+      'Failed to fetch addresses '
+      '(status ${response.statusCode}): ${response.body}',
+    );
   }
 }

@@ -1,14 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:lovebox/utils/snackbar_helper.dart';
-
+import 'package:lovebox/models/address_model.dart';
 import '../constants/color.dart';
 import '../constants/api_endpoints.dart';
 import '../models/user_model.dart';
-import '../models/address_model.dart';
 import '../services/local_storage.dart';
-import '../services/address_service.dart';
+import '../utils/snackbar_helper.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
 
@@ -22,7 +20,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   UserModel? _user;
   bool _loading = true;
-  bool _loadingAddress = true;
 
   @override
   void initState() {
@@ -31,26 +28,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
-    setState(() {
-      _loading = true;
-      _loadingAddress = true;
-    });
+    setState(() => _loading = true);
 
     try {
-      // Load cached user for instant UI
+      // 🔹 Load cached data first for instant UI
       final cachedUser = await LocalStorage.getUser();
-      if (mounted) setState(() => _user = cachedUser);
+      if (mounted && cachedUser != null) setState(() => _user = cachedUser);
 
-      // Fetch fresh user data from backend
       final token = await LocalStorage.getAuthToken();
-      if (token == null || token.isEmpty) {
-        if (mounted) setState(() => _loading = false);
-        return;
-      }
+      if (token == null || token.isEmpty) return;
 
-      final url = Uri.parse(ApiEndpoints.userProfile);
       final res = await http.get(
-        url,
+        Uri.parse(ApiEndpoints.userProfile),
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
@@ -58,38 +47,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       if (res.statusCode == 200) {
-        final data = jsonDecode(res.body)['data'] ?? {};
-        final user = UserModel.fromJson(data, token: token);
-
-        // Fetch addresses separately
-        final addresses = await AddressService.fetchUserAddresses(token);
-        final updatedUser = user.copyWith(addresses: addresses);
-
-        await LocalStorage.saveUser(updatedUser);
-
-        if (mounted) setState(() => _user = updatedUser);
+        final jsonBody = jsonDecode(res.body);
+        final user = UserModel.fromJson(jsonBody['data'], token: token);
+        await LocalStorage.saveUser(user);
+        if (mounted) setState(() => _user = user);
       } else if (res.statusCode == 401) {
         await _logout();
       } else {
-        debugPrint('Profile fetch failed: ${res.statusCode} ${res.body}');
-        if (mounted)
+        if (mounted) {
           SnackbarHelper.showError(context, 'Failed to load profile');
+        }
       }
     } catch (e) {
-      debugPrint('Error loading profile: $e');
-      if (mounted) SnackbarHelper.showError(context, 'Error loading profile');
+      if (mounted) {
+        SnackbarHelper.showError(context, 'Error loading profile: $e');
+      }
     } finally {
-      if (mounted)
-        setState(() {
-          _loading = false;
-          _loadingAddress = false;
-        });
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  Future<void> _refreshProfile() async {
-    await _loadProfile();
-  }
+  Future<void> _refreshProfile() async => await _loadProfile();
 
   Future<void> _openEditProfile() async {
     if (_user == null) return;
@@ -99,15 +77,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute(builder: (_) => EditProfileScreen(user: _user!)),
     );
 
+    // 🔹 After editing, refresh from server to ensure default address updates
     if (updatedUser != null && mounted) {
-      // Save updated token in case password/email changed
-      if (updatedUser.token != _user!.token) {
-        await LocalStorage.saveAuthToken(updatedUser.token);
-      }
-
+      await LocalStorage.saveUser(updatedUser);
       setState(() => _user = updatedUser);
-
-      // ✅ Show success snackbar
+      await _loadProfile();
       SnackbarHelper.showSuccess(context, 'Profile updated successfully');
     }
   }
@@ -130,7 +104,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: RefreshIndicator(
         onRefresh: _refreshProfile,
         color: AppColors.primary,
-        backgroundColor: Colors.white,
         child:
             _loading
                 ? Center(

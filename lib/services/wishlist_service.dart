@@ -8,7 +8,7 @@ import '../constants/api_endpoints.dart';
 class WishlistService {
   /// Builds the full v1 URL for endpoints
   static String _endpoint(String path) =>
-      "${ApiEndpoints.baseUrl}/v1$path";
+      "${ApiEndpoints.baseApi}/v1$path";
 
   /// -------------------------------
   ///  GET  /api/v1/wishlist

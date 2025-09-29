@@ -35,7 +35,7 @@ class CartService {
     final token = await LocalStorage.getAuthToken();
     if (token == null || token.isEmpty) throw UnauthorizedException();
 
-    final url = Uri.parse('${ApiEndpoints.baseUrl}/cart/$cartId');
+    final url = Uri.parse('${ApiEndpoints.baseApi}/cart/$cartId');
     final response = await http.delete(
       url,
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},

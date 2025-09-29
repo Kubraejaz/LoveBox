@@ -2,18 +2,24 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 
-/// Handles all local persistence: user info, auth token, navbar index,
+/// Handles local persistence: user info, auth token, navbar index,
 /// and per–user cart data.
 class LocalStorage {
-  // ------------------- KEYS -------------------
+  // ------------------- Keys -------------------
   static const String _userKey = 'user';
   static const String _authTokenKey = 'authToken';
   static const String _navIndexKey = 'navIndex';
 
-  // ------------------- USER -------------------
+  // ------------------- User -------------------
   static Future<void> saveUser(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userKey, jsonEncode(user.toJson()));
+  }
+
+  /// Save user and token together after login or profile update
+  static Future<void> saveUserAndToken(UserModel user, String token) async {
+    await saveUser(user);
+    await saveAuthToken(token);
   }
 
   static Future<UserModel?> getUser() async {
@@ -22,10 +28,13 @@ class LocalStorage {
     if (data == null || data.isEmpty) return null;
 
     try {
-      final jsonMap = jsonDecode(data) as Map<String, dynamic>;
-      return UserModel.fromJson(jsonMap);
+      final Map<String, dynamic> jsonMap = jsonDecode(data);
+      // If your UserModel needs a token, retrieve it and pass it
+      final token = prefs.getString(_authTokenKey);
+  return UserModel.fromJson(jsonMap);
+
     } catch (e) {
-      // If JSON is corrupted or from an older version, clear it.
+      // Corrupted or old JSON, remove it.
       await prefs.remove(_userKey);
       return null;
     }
@@ -36,7 +45,7 @@ class LocalStorage {
     await prefs.remove(_userKey);
   }
 
-  // ------------------- AUTH TOKEN -------------------
+  // ------------------- Auth Token -------------------
   static Future<void> saveAuthToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_authTokenKey, token);
@@ -52,7 +61,7 @@ class LocalStorage {
     await prefs.remove(_authTokenKey);
   }
 
-  // ------------------- NAVBAR INDEX -------------------
+  // ------------------- Navbar Index -------------------
   static Future<void> saveNavIndex(int index) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_navIndexKey, index);
@@ -68,11 +77,8 @@ class LocalStorage {
     await prefs.setInt(_navIndexKey, 0);
   }
 
-  // ------------------- CART (Per User) -------------------
-  static Future<void> saveCart(
-    String userId,
-    List<Map<String, dynamic>> cart,
-  ) async {
+  // ------------------- Cart (Per User) -------------------
+  static Future<void> saveCart(String userId, List<Map<String, dynamic>> cart) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('cart_$userId', jsonEncode(cart));
   }
@@ -86,7 +92,7 @@ class LocalStorage {
       final List decoded = jsonDecode(data);
       return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (_) {
-      // Corrupted cart data—clear and return empty list
+      // Corrupted cart data — clear and return empty list
       await prefs.remove('cart_$userId');
       return [];
     }
@@ -97,7 +103,7 @@ class LocalStorage {
     await prefs.remove('cart_$userId');
   }
 
-  // ------------------- GENERIC STORAGE -------------------
+  // ------------------- Generic Helpers -------------------
   static Future<void> setString(String key, String value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, value);
@@ -113,21 +119,19 @@ class LocalStorage {
     await prefs.remove(key);
   }
 
-  // ------------------- CHECK LOGIN STATE -------------------
+  // ------------------- Check Login State -------------------
   /// Returns true if an auth token exists and is not empty.
   static Future<bool> isLoggedIn() async {
     final token = await getAuthToken();
     return token != null && token.isNotEmpty;
   }
 
-  // ------------------- CLEAR ALL USER DATA -------------------
+  // ------------------- Clear All User Data -------------------
   /// Clears user profile and token.
-  /// If you also want to reset nav index or cart, call those methods separately.
+  /// Call resetNavIndex() or clearCart(userId) separately if needed.
   static Future<void> clearAllUserData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userKey);
     await prefs.remove(_authTokenKey);
-    // Optionally: await resetNavIndex();
-    // Optionally: clearCart for each user if required.
   }
 }

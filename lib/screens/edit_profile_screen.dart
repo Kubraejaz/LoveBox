@@ -1,14 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:lovebox/utils/snackbar_helper.dart';
-
-import '../constants/color.dart';
+import 'package:lovebox/constants/color.dart';
 import '../constants/api_endpoints.dart';
 import '../models/user_model.dart';
 import '../models/address_model.dart';
 import '../services/local_storage.dart';
-import '../services/address_service.dart';
+import '../utils/snackbar_helper.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -30,139 +28,182 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _postalController = TextEditingController();
 
   bool _isSaving = false;
-  bool _loadingAddress = true;
   AddressModel? _defaultAddress;
-  List<AddressModel> _userAddresses = [];
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.user.name);
     _emailController = TextEditingController(text: widget.user.email);
-    _loadAddresses();
-  }
 
-  Future<void> _loadAddresses() async {
-    setState(() => _loadingAddress = true);
-    try {
-      final token = widget.user.token;
-      final addresses = await AddressService.fetchUserAddresses(token);
+    _defaultAddress =
+        widget.user.defaultAddress ??
+        (widget.user.addresses.isNotEmpty ? widget.user.addresses.first : null);
 
-      _userAddresses = addresses;
-
-      _defaultAddress =
-          addresses.isNotEmpty
-              ? addresses.firstWhere(
-                (a) => a.isDefault,
-                orElse: () => addresses.first,
-              )
-              : null;
-
-      if (_defaultAddress != null) {
-        _addressController.text = _defaultAddress!.address;
-        _cityController.text = _defaultAddress!.city;
-        _stateController.text = _defaultAddress!.state;
-        _countryController.text = _defaultAddress!.country;
-        _postalController.text = _defaultAddress!.postalCode;
-      }
-    } catch (e) {
-      debugPrint('Error fetching addresses: $e');
-      if (mounted)
-        SnackbarHelper.showError(context, 'Failed to load addresses');
-    } finally {
-      if (mounted) setState(() => _loadingAddress = false);
+    if (_defaultAddress != null) {
+      _addressController.text = _defaultAddress!.address;
+      _cityController.text = _defaultAddress!.city;
+      _stateController.text = _defaultAddress!.state;
+      _countryController.text = _defaultAddress!.country;
+      _postalController.text = _defaultAddress!.postalCode;
     }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _addressController.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
-    _countryController.dispose();
-    _postalController.dispose();
-    super.dispose();
   }
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isSaving = true);
 
     try {
-      final token = widget.user.token;
-      final url = Uri.parse(ApiEndpoints.userProfile);
+      final token = await LocalStorage.getAuthToken();
+      if (token == null) {
+        SnackbarHelper.showError(context, 'Token not found');
+        return;
+      }
 
-      final body = {
+      // ------------------- 1️⃣ Update User Profile -------------------
+      final profileBody = jsonEncode({
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
+      });
+
+      final profileRes = await http.put(
+        Uri.parse(ApiEndpoints.updateProfile),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: profileBody,
+      );
+
+      if (profileRes.statusCode != 200) {
+        final body = jsonDecode(profileRes.body);
+        final msg =
+            body['message'] ??
+            (body['errors'] != null
+                ? body['errors'].values.map((e) => e.join(', ')).join('\n')
+                : 'Failed to update profile');
+        SnackbarHelper.showError(context, msg);
+        return;
+      }
+
+      // ------------------- 2️⃣ Update Default Address -------------------
+      final addressBody = jsonEncode({
+        if (_defaultAddress?.id != null) 'id': _defaultAddress!.id,
         'address': _addressController.text.trim(),
         'city': _cityController.text.trim(),
         'state': _stateController.text.trim(),
         'country': _countryController.text.trim(),
         'postal_code': _postalController.text.trim(),
-      };
+        'is_default': true,
+      });
 
-      final response = await http.put(
-        url,
+      final addressRes = await http.put(
+        Uri.parse(ApiEndpoints.updateAddress),
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
+        body: addressBody,
       );
 
-      if (response.statusCode == 200) {
-        final updatedAddresses =
-            _defaultAddress != null
-                ? [
-                  _defaultAddress!.copyWith(
-                    address: _addressController.text.trim(),
-                    city: _cityController.text.trim(),
-                    state: _stateController.text.trim(),
-                    country: _countryController.text.trim(),
-                    postalCode: _postalController.text.trim(),
-                  ),
-                ]
-                : <AddressModel>[];
+      if (addressRes.statusCode != 200) {
+        final body = jsonDecode(addressRes.body);
+        final msg =
+            body['message'] ??
+            (body['errors'] != null
+                ? body['errors'].values.map((e) => e.join(', ')).join('\n')
+                : 'Failed to update address');
+        SnackbarHelper.showError(context, msg);
+        return;
+      }
 
-        final updatedUser = widget.user.copyWith(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          addresses: updatedAddresses,
+      // ------------------- 3️⃣ Fetch Updated User -------------------
+      final updatedUserRes = await http.get(
+        Uri.parse(ApiEndpoints.userProfile),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (updatedUserRes.statusCode == 200) {
+        final updatedUser = UserModel.fromJson(
+          jsonDecode(updatedUserRes.body)['data'],
+          token: token,
         );
-
-        await LocalStorage.saveUser(updatedUser);
-
-        if (!mounted) return;
-
-        // ✅ Show success snackbar
-        SnackbarHelper.showSuccess(context, 'Profile updated successfully');
         Navigator.pop(context, updatedUser);
       } else {
-        throw Exception(
-          'Update failed: ${response.statusCode} ${response.body}',
-        );
+        SnackbarHelper.showSuccess(context, 'Profile and address updated');
+        Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) SnackbarHelper.showError(context, e.toString());
+      SnackbarHelper.showError(context, 'Error: $e');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  InputDecoration _decoration([String? label]) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+  // ---------- UI Helpers ----------
+  Widget _sectionTitle(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textDark,
+      ),
+    ),
+  );
+
+  Widget _glassCard(List<Widget> children) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withOpacity(0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _pillField(
+    TextEditingController c,
+    String label, {
+    TextInputType type = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: c,
+        keyboardType: type,
+        style: const TextStyle(color: AppColors.textDark, fontSize: 16),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.inputFill,
+          labelText: label,
+          labelStyle: const TextStyle(color: AppColors.textGrey),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        validator: (val) => val!.trim().isEmpty ? 'Enter $label' : null,
       ),
     );
   }
@@ -170,127 +211,97 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      backgroundColor: AppColors.background,
+
+      // ✅ Fixed Bottom Button
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(40),
+            ),
+            elevation: 6,
+            shadowColor: AppColors.primary.withOpacity(0.4),
+          ),
+          onPressed: _isSaving ? null : _saveProfile,
+          child:
+              _isSaving
+                  ? const SizedBox(
+                    height: 26,
+                    width: 26,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                  : const Text(
+                    'Save Changes',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
         ),
-        elevation: 1,
       ),
+
       body: Stack(
         children: [
+          // Gradient header
           Container(
+            height: 230,
             decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background.jpg'),
-                fit: BoxFit.cover,
+              gradient: LinearGradient(
+                colors: [AppColors.primary, Color(0xFFF96A86)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+            ),
+          ),
+          SafeArea(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                children: [
+                  const Text(
+                    'Edit Profile',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  _glassCard([
+                    _sectionTitle('👤  User Information'),
+                    _pillField(_nameController, 'Full Name'),
+                    _pillField(
+                      _emailController,
+                      'Email',
+                      type: TextInputType.emailAddress,
+                    ),
+                  ]),
+                  _glassCard([
+                    _sectionTitle('🏠  Address Information'),
+                    _pillField(_addressController, 'Address'),
+                    _pillField(_cityController, 'City'),
+                    _pillField(_stateController, 'State'),
+                    _pillField(_countryController, 'Country'),
+                    _pillField(
+                      _postalController,
+                      'Postal Code',
+                      type: TextInputType.number,
+                    ),
+                  ]),
+                  const SizedBox(height: 80), // spacing above bottom button
+                ],
               ),
             ),
           ),
-          _loadingAddress
-              ? Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              )
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'User Information',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: _decoration('Full Name'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: _decoration('Email'),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Address Information',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _addressController,
-                        decoration: _decoration('Address'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _cityController,
-                        decoration: _decoration('City'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _stateController,
-                        decoration: _decoration('State'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _countryController,
-                        decoration: _decoration('Country'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _postalController,
-                        decoration: _decoration('Postal Code'),
-                      ),
-                      const SizedBox(height: 30),
-                      Center(
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: _isSaving ? () {} : _saveProfile,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              disabledBackgroundColor: AppColors.primary,
-                              disabledForegroundColor: Colors.white,
-                            ),
-                            child:
-                                _isSaving
-                                    ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                    : const Text(
-                                      'Save Changes',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
         ],
       ),
-      backgroundColor: AppColors.background,
     );
   }
 }
