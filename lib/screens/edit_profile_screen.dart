@@ -213,7 +213,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      // ✅ Fixed Bottom Button
+      // ✅ Fixed Bottom Button (color stays same while loading)
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
         child: ElevatedButton(
@@ -227,7 +227,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             elevation: 6,
             shadowColor: AppColors.primary.withOpacity(0.4),
           ),
-          onPressed: _isSaving ? null : _saveProfile,
+          // 🔑 keep button enabled so it doesn’t turn grey
+          onPressed: _isSaving ? () {} : _saveProfile,
           child:
               _isSaving
                   ? const SizedBox(

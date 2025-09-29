@@ -29,9 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfile() async {
     setState(() => _loading = true);
-
     try {
-      // 🔹 Load cached data first for instant UI
       final cachedUser = await LocalStorage.getUser();
       if (mounted && cachedUser != null) setState(() => _user = cachedUser);
 
@@ -77,7 +75,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute(builder: (_) => EditProfileScreen(user: _user!)),
     );
 
-    // 🔹 After editing, refresh from server to ensure default address updates
     if (updatedUser != null && mounted) {
       await LocalStorage.saveUser(updatedUser);
       setState(() => _user = updatedUser);
@@ -111,9 +108,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
                 : ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
                   children: [
                     _buildHeader(defaultAddress),
-                    const SizedBox(height: 90),
+                    const SizedBox(height: 100),
                     _buildActionGrid(),
                     const SizedBox(height: 32),
                   ],
@@ -122,85 +120,109 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ---------- Stylish Header ----------
   Widget _buildHeader(AddressModel? defaultAddress) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        // Gradient background
         Container(
-          height: 180,
+          height: 260,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+              colors: [
+                AppColors.primary.withOpacity(0.95),
+                AppColors.primary.withOpacity(0.75),
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(40),
-              bottomRight: Radius.circular(40),
+              bottomLeft: Radius.circular(45),
+              bottomRight: Radius.circular(45),
             ),
           ),
         ),
+
+        // Avatar + Card
         Positioned(
-          left: 20,
-          bottom: -50,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          left: 0,
+          right: 0,
+          bottom: -70,
+          child: Column(
             children: [
-              const CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.white,
-                backgroundImage: NetworkImage(
-                  "https://static.vecteezy.com/system/resources/thumbnails/029/769/642/small/portrait-of-beautiful-muslim-female-student-online-learning-in-coffee-shop-young-woman-with-hijab-studies-with-laptop-in-cafe-girl-doing-her-homework-free-photo.jpeg",
-                ),
-              ),
-              const SizedBox(width: 16),
               Container(
-                padding: const EdgeInsets.all(12),
-                width: MediaQuery.of(context).size.width * 0.55,
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(16),
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Colors.white, AppColors.primary.withOpacity(0.2)],
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _user?.name ?? "Guest User",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
+                child: const CircleAvatar(
+                  radius: 60,
+                  backgroundImage: NetworkImage(
+                    "https://static.vecteezy.com/system/resources/thumbnails/029/769/642/small/portrait-of-beautiful-muslim-female-student-online-learning-in-coffee-shop-young-woman-with-hijab-studies-with-laptop-in-cafe-girl-doing-her-homework-free-photo.jpeg",
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Info Card
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 320),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 20,
+                    horizontal: 20,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _user?.email ?? "guest@example.com",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textGrey,
-                      ),
-                    ),
-                    if (defaultAddress != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6.0),
-                        child: Text(
-                          '${defaultAddress.address}, ${defaultAddress.city}, ${defaultAddress.state}, ${defaultAddress.country}${defaultAddress.postalCode.isNotEmpty ? ', ${defaultAddress.postalCode}' : ''}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textGrey,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _user?.name ?? "Guest User",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark,
                         ),
                       ),
-                  ],
+                      const SizedBox(height: 8),
+                      _infoRow(
+                        icon: Icons.email_outlined,
+                        text: _user?.email ?? "guest@example.com",
+                      ),
+                      if (defaultAddress != null) ...[
+                        const SizedBox(height: 8),
+                        _infoRow(
+                          icon: Icons.location_on_outlined,
+                          text:
+                              '${defaultAddress.address}, ${defaultAddress.city}, ${defaultAddress.state}, ${defaultAddress.country}'
+                              '${defaultAddress.postalCode.isNotEmpty ? ', ${defaultAddress.postalCode}' : ''}',
+                          isMultiLine: true,
+                          iconColor: AppColors.primary, // 🔑 Primary color
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -210,6 +232,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Reusable info row for email & address
+  Widget _infoRow({
+    required IconData icon,
+    required String text,
+    bool isMultiLine = false,
+    Color? iconColor,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment:
+          isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      children: [
+        Icon(icon, size: 18, color: iconColor ?? AppColors.textGrey),
+        const SizedBox(width: 4), // 🔑 reduced space
+        Flexible(
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isMultiLine ? 14 : 15,
+              color: AppColors.textGrey,
+              height: isMultiLine ? 1.2 : 1.4, // 🔑 tighter line height
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------- Action Grid ----------
   Widget _buildActionGrid() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -220,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _actionCard(Icons.edit, "Edit Profile", _openEditProfile),
           _actionCard(Icons.lock, "Change Password", () {}),
           _actionCard(Icons.shopping_bag, "My Orders", () {}),
-          _actionCard(Icons.settings, "Setting", () {}),
+          _actionCard(Icons.settings, "Settings", () {}),
           _actionCard(Icons.contact_support, "Contact Us", () {}),
           _actionCard(Icons.logout, "Logout", _logout),
         ],
@@ -236,12 +288,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
