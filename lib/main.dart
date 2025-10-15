@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:lovebox/screens/splash_screen.dart';
-import 'package:lovebox/providers/auth_provider.dart';
-import 'package:lovebox/providers/cart_provider.dart';
-import 'package:lovebox/providers/whishlist_provider.dart'; // <-- updated
+import 'package:lovebox/screens/Authentication/Widgets/splash_screen.dart';
+import 'package:lovebox/screens/Authentication/Providers/auth_provider.dart';
+import 'package:lovebox/screens/Cart/Providers/cart_provider.dart';
+import 'package:lovebox/screens/Wishlist/Providers/whishlist_provider.dart'; // <-- updated
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
