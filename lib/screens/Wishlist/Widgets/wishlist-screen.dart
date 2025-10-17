@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../Providers/whishlist_provider.dart';
-import '../../../constants/color.dart'; // AppColors
+import '../../../constants/color.dart';
 import '../../../constants/network_storage.dart';
-import '../../../utils/snackbar_helper.dart'; // ✅ import your helper
+import '../../../utils/snackbar_helper.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
@@ -77,9 +77,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                 itemBuilder: (context, index) {
                   final product = items[index];
                   final imageUrl = NetworkStorage.getUrl(product.image);
-                  final brandImageUrl = NetworkStorage.getUrl(
-                    product.brandImage,
-                  );
+                  final brandName = (product.brandName ?? '').trim();
 
                   return Card(
                     shape: RoundedRectangleBorder(
@@ -89,7 +87,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Product image
+                        // Product Image
                         Expanded(
                           flex: 3,
                           child: Stack(
@@ -115,7 +113,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                       ),
                                 ),
                               ),
-                              // Remove button
+                              // Remove Button
                               Positioned(
                                 top: 8,
                                 right: 8,
@@ -156,18 +154,19 @@ class _WishlistScreenState extends State<WishlistScreen> {
                             ],
                           ),
                         ),
-                        // Product details
+
+                        // Product Details
                         Expanded(
                           flex: 2,
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                // Product name and Brand logo in a row
+                                // Product name (left) + Brand name (right)
                                 Row(
                                   children: [
+                                    // Product name: take available space and truncate
                                     Expanded(
                                       child: Text(
                                         product.name,
@@ -180,23 +179,33 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                         ),
                                       ),
                                     ),
-                                    if (product.brandImage != null &&
-                                        product.brandImage!.isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 6.0,
+
+                                    // Small gap
+                                    const SizedBox(width: 8),
+
+                                    // Brand name on the right (limited width)
+                                    if (brandName.isNotEmpty)
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 90,
                                         ),
-                                        child: CircleAvatar(
-                                          radius: 12,
-                                          backgroundImage: NetworkImage(
-                                            brandImageUrl,
+                                        child: Text(
+                                          brandName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.right,
+                                          style: const TextStyle(
+                                            color: AppColors.textGrey,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
                                           ),
-                                          backgroundColor: Colors.transparent,
                                         ),
                                       ),
                                   ],
                                 ),
+
                                 const SizedBox(height: 6),
+
                                 // Price
                                 Text(
                                   'PKR ${product.price}',

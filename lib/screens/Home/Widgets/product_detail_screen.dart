@@ -159,7 +159,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
 
-            // --- Price below image ---
+            // --- Name + Price ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
@@ -194,9 +194,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ],
               ),
             ),
+
             const SizedBox(height: 20),
 
-            // --- Brand & Business Info Card ---
+            // --- Brand & Business Info ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -216,7 +217,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- Brand Section ---
+                    // --- Brand ---
                     Expanded(
                       child: Row(
                         children: [
@@ -252,7 +253,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ),
 
-                    // Vertical Divider
+                    // Divider
                     Container(
                       width: 1,
                       height: 45,
@@ -260,7 +261,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
 
-                    // --- Business Section ---
+                    // --- Business ---
                     Expanded(
                       child: Row(
                         children: [
@@ -289,13 +290,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     color: Colors.black,
                                   ),
                                 ),
-                                // Text(
-                                //   p.businessAddress ?? "Address not available",
-                                //   style: const TextStyle(
-                                //     fontSize: 12,
-                                //     color: Colors.grey,
-                                //   ),
-                                // ),
                               ],
                             ),
                           ),
@@ -306,9 +300,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 25),
 
-            // --- Quantity Section ---
+            // --- Quantity ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
@@ -326,9 +321,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ],
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            // ✅ --- Stock Information moved here ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.inventory_2_outlined,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Available Stock: ",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    p.stock != null ? "${p.stock}" : "N/A",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          (p.stock ?? 0) > 0 ? Colors.green : Colors.redAccent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 25),
 
-            // --- Description Section ---
+            // --- Description ---
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
@@ -351,13 +381,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 30),
 
             // --- Add to Cart Button ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: ElevatedButton(
-                onPressed: _isAdding ? null : _addToCart,
+                onPressed: _isAdding ? () {} : _addToCart,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   minimumSize: const Size(double.infinity, 55),
@@ -393,7 +424,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  // --- Helper Widgets ---
+  // --- Quantity Selector ---
   Widget _quantitySelector() {
     return Container(
       decoration: BoxDecoration(
@@ -439,25 +470,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         child: Icon(icon, size: 18, color: Colors.white),
       ),
-    );
-  }
-
-  Widget _iconInfo(IconData icon, String title, String value) {
-    return Row(
-      children: [
-        Icon(icon, color: AppColors.primary, size: 22),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            "$title: $value",
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

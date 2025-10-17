@@ -1,7 +1,7 @@
 /// Central place for all API URLs
 class ApiEndpoints {
   /// Base URL (already contains /user)
-  static const String baseApi = 'http://10.108.24.14:8080/api/v1/user';
+  static const String baseApi = 'http://192.168.18.28:8000/api/v1/user';
 
   // ---------- Auth ----------
   static const String login = '$baseApi/login';
