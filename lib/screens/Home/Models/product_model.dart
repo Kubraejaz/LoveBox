@@ -5,14 +5,21 @@ class ProductModel {
   final String? sku;
   final String price;
   final int? stock;
-  final int? categoryId;
-  final double? ratingAvg;
-  final int? ratingCount;
+  final int? minimumQty;
+  final int? maximumQty;
+  final String? categoryName;
+  final String? subcategoryName;
+  final String? brandName;
+  final String? brandImage;
+  final String? unitName;
+  final String? businessName;
+  final String? businessLogo;
+  final String? businessAddress;
   final String? image;
+  final String? barcode;
   final bool? isActive;
-  final Category? category;
 
-  bool isFavorite; // 🔹 added
+  bool isFavorite;
 
   ProductModel({
     required this.id,
@@ -21,16 +28,21 @@ class ProductModel {
     this.sku,
     required this.price,
     this.stock,
-    this.categoryId,
-    this.ratingAvg,
-    this.ratingCount,
+    this.minimumQty,
+    this.maximumQty,
+    this.categoryName,
+    this.subcategoryName,
+    this.brandName,
+    this.brandImage,
+    this.unitName,
+    this.businessName,
+    this.businessLogo,
+    this.businessAddress,
     this.image,
+    this.barcode,
     this.isActive,
-    this.category,
-    this.isFavorite = false, // default false
+    this.isFavorite = false,
   });
-
-  double? get rating => ratingAvg;
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
@@ -40,19 +52,22 @@ class ProductModel {
       sku: json['sku']?.toString(),
       price: json['price']?.toString() ?? '0',
       stock: _parseInt(json['stock']),
-      categoryId: _parseInt(json['category_id']),
-      ratingAvg: json['rating_avg'] != null
-          ? double.tryParse(json['rating_avg'].toString())
-          : null,
-      ratingCount: _parseInt(json['rating_count']),
+      minimumQty: _parseInt(json['minimum_qty']),
+      maximumQty: _parseInt(json['maximum_qty']),
+      categoryName: json['category_name']?.toString(),
+      subcategoryName: json['subcategory_name']?.toString(),
+      brandName: json['brand_name']?.toString(),
+      brandImage: json['brand_image']?.toString(),
+      unitName: json['unit_name']?.toString(),
+      businessName: json['business_name']?.toString(),
+      businessLogo: json['business_logo']?.toString(),
+      businessAddress: json['business_address']?.toString(),
       image: json['image']?.toString(),
+      barcode: json['barcode']?.toString(),
       isActive: json['is_active'] == null
           ? null
           : (json['is_active'] == true || json['is_active'].toString() == '1'),
-      category: json['category'] != null
-          ? Category.fromJson(Map<String, dynamic>.from(json['category']))
-          : null,
-      isFavorite: json['is_favorite'] == true, // 🔹 set from API if available
+      isFavorite: json['is_favorite'] == true,
     );
   }
 
@@ -64,12 +79,19 @@ class ProductModel {
       'sku': sku,
       'price': price,
       'stock': stock,
-      'category_id': categoryId,
-      'rating_avg': ratingAvg,
-      'rating_count': ratingCount,
+      'minimum_qty': minimumQty,
+      'maximum_qty': maximumQty,
+      'category_name': categoryName,
+      'subcategory_name': subcategoryName,
+      'brand_name': brandName,
+      'brand_image': brandImage,
+      'unit_name': unitName,
+      'business_name': businessName,
+      'business_logo': businessLogo,
+      'business_address': businessAddress,
       'image': image,
+      'barcode': barcode,
       'is_active': isActive,
-      'category': category?.toJson(),
       'is_favorite': isFavorite,
     };
   }
@@ -78,23 +100,5 @@ class ProductModel {
     if (value == null) return null;
     if (value is int) return value;
     return int.tryParse(value.toString());
-  }
-}
-
-class Category {
-  final int id;
-  final String name;
-
-  Category({required this.id, required this.name});
-
-  factory Category.fromJson(Map<String, dynamic> json) {
-    return Category(
-      id: ProductModel._parseInt(json['id']) ?? 0,
-      name: json['name']?.toString() ?? '',
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name};
   }
 }

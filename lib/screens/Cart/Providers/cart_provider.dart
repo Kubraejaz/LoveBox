@@ -39,4 +39,20 @@ class CartProvider with ChangeNotifier {
       setLoading(false);
     }
   }
+
+  // ✅ Add this method
+  Future<void> addToCart(dynamic product, int quantity) async {
+    try {
+      setLoading(true);
+      final success = await CartService.addToCart(product.id, quantity);
+      if (success) {
+        await fetchCartItems();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error adding to cart: $e');
+    } finally {
+      setLoading(false);
+    }
+  }
 }

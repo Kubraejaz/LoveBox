@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lovebox/screens/Authentication/Widgets/Onboarding_screen.dart';
 import 'package:lovebox/screens/Core/local_storage.dart';
-import 'package:lovebox/screens/onboarding_screen.dart';
 import 'package:lovebox/screens/Authentication/Widgets/login_screen.dart'; // <-- use your actual login screen
 import 'package:lovebox/screens/Home/Widgets/bottom_navbar_screen.dart';
 

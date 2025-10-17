@@ -1,6 +1,6 @@
 class NetworkStorage {
   /// Base URL for Laravel storage
-  static const String baseUrl = "http://192.168.18.28:8000/storage/";
+  static const String baseUrl = "http://10.108.24.14:8080/storage/";
 
   /// Returns the full URL for a given file path
   static String getUrl(String? path) {

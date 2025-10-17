@@ -32,20 +32,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Load last saved category & search query
   Future<void> _restoreFilters() async {
-    final savedCategory =
-        await LocalStorage.getNavIndex(); // reuse or create new keys
-    final savedSearch =
-        await LocalStorage.getUser(); // 👈 you may want a new method for search
-
-    // Better: define new methods for these in LocalStorage
     final prefsCategory = await LocalStorage.getString("lastCategory");
     final prefsSearch = await LocalStorage.getString("lastSearch");
 
-    if (prefsCategory != null && prefsCategory.isNotEmpty) {
-      setState(() => selectedCategory = prefsCategory);
-    }
-    if (prefsSearch != null && prefsSearch.isNotEmpty) {
-      setState(() => _searchQuery = prefsSearch);
+    if (mounted) {
+      setState(() {
+        if (prefsCategory != null && prefsCategory.isNotEmpty) {
+          selectedCategory = prefsCategory;
+        }
+        if (prefsSearch != null && prefsSearch.isNotEmpty) {
+          _searchQuery = prefsSearch;
+        }
+      });
     }
   }
 
@@ -61,14 +59,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final uniqueCategories = <String>{};
     for (var product in products) {
-      if (product.category?.name != null && product.category!.name.isNotEmpty) {
-        uniqueCategories.add(product.category!.name);
+      final catName = product.categoryName;
+      if (catName != null && catName.isNotEmpty) {
+        uniqueCategories.add(catName);
       }
     }
 
-    setState(() {
-      categories = ["All", ...uniqueCategories.toList()];
-    });
+    if (mounted) {
+      setState(() {
+        categories = ["All", ...uniqueCategories.toList()];
+        if (!categories.contains(selectedCategory)) {
+          selectedCategory = "All";
+        }
+      });
+    }
 
     return products;
   }
@@ -81,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await _productsFuture;
 
+    await _saveFilters();
     if (mounted) {
       setState(() {});
     }
@@ -145,18 +150,21 @@ class _HomeScreenState extends State<HomeScreen> {
             if (selectedCategory != "All") {
               products =
                   products
-                      .where((p) => p.category?.name == selectedCategory)
+                      .where((p) => p.categoryName == selectedCategory)
                       .toList();
             }
 
             // Search filter
-            final query = _searchQuery.trim();
+            final query = _searchQuery.trim().toLowerCase();
             if (query.isNotEmpty) {
               products =
                   products.where((p) {
-                    final name = (p.name ?? '').toLowerCase();
+                    final name = (p.name).toLowerCase();
                     final desc = (p.description ?? '').toLowerCase();
-                    return name.contains(query) || desc.contains(query);
+                    final brand = (p.brandName ?? '').toLowerCase();
+                    return name.contains(query) ||
+                        desc.contains(query) ||
+                        brand.contains(query);
                   }).toList();
             }
 
@@ -175,26 +183,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         selectedCategory = category;
                         if (category != "All") _searchQuery = "";
                       });
-                      _saveFilters(); // ✅ Save selected category
+                      _saveFilters();
                     },
                   ),
-                  const SizedBox(height: 20),
-
-                  // Show Search + Banner only if "All" is selected
+                  const SizedBox(height: 12), // Reduced spacing
+                  // Search + Banner only if "All"
                   if (selectedCategory == "All") ...[
                     SearchSection(
                       onSearchChanged: (query) {
                         setState(() {
-                          _searchQuery = query.toLowerCase();
+                          _searchQuery = query;
                         });
-                        _saveFilters(); // ✅ Save search query
+                        _saveFilters();
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12), // Reduced spacing
                     const BannerSection(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16), // Reduced spacing
                   ],
 
+                  // Product Grid or Empty State
                   if (products.isEmpty)
                     SizedBox(
                       height: MediaQuery.of(context).size.height * 0.4,
@@ -221,15 +229,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     )
                   else
-                    SizedBox(
-                      height:
-                          selectedCategory == "All"
-                              ? null
-                              : MediaQuery.of(context).size.height * 0.7,
-                      child: ProductGridSection(
-                        products: products,
-                        scrollController: ScrollController(),
-                      ),
+                    ProductGridSection(
+                      products: products,
+                      scrollController: ScrollController(),
                     ),
                 ],
               ),

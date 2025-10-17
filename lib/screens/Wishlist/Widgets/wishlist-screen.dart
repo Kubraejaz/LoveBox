@@ -32,7 +32,6 @@ class _WishlistScreenState extends State<WishlistScreen> {
     final wishlistProvider = Provider.of<WishlistProvider>(context);
 
     if (_loading) {
-      // ✅ Circular loader now uses AppColors.primary
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -78,6 +77,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
                 itemBuilder: (context, index) {
                   final product = items[index];
                   final imageUrl = NetworkStorage.getUrl(product.image);
+                  final brandImageUrl = NetworkStorage.getUrl(
+                    product.brandImage,
+                  );
 
                   return Card(
                     shape: RoundedRectangleBorder(
@@ -124,7 +126,6 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                       listen: false,
                                     ).removeFromWishlist(product);
 
-                                    // ✅ Show success snackbar using your helper
                                     if (mounted) {
                                       SnackbarHelper.showSuccess(
                                         context,
@@ -162,19 +163,41 @@ class _WishlistScreenState extends State<WishlistScreen> {
                             padding: const EdgeInsets.all(12.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                Text(
-                                  product.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppColors.textDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                // Product name and Brand logo in a row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        product.name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: AppColors.textDark,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    if (product.brandImage != null &&
+                                        product.brandImage!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 6.0,
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 12,
+                                          backgroundImage: NetworkImage(
+                                            brandImageUrl,
+                                          ),
+                                          backgroundColor: Colors.transparent,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                                 const SizedBox(height: 6),
+                                // Price
                                 Text(
                                   'PKR ${product.price}',
                                   style: const TextStyle(

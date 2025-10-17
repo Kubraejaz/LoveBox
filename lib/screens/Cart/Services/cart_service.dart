@@ -23,8 +23,11 @@ class CartService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-      final List<dynamic> list = decoded is List ? decoded : (decoded['data'] as List? ?? []);
-      return list.map((e) => CartItem.fromJson(Map<String, dynamic>.from(e))).toList();
+      final List<dynamic> list =
+          decoded is List ? decoded : (decoded['data'] as List? ?? []);
+      return list
+          .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
     }
 
     if (response.statusCode == 401) throw UnauthorizedException();
@@ -44,5 +47,28 @@ class CartService {
     if (response.statusCode == 200 || response.statusCode == 204) return true;
     if (response.statusCode == 401) throw UnauthorizedException();
     throw Exception('Failed to remove cart item');
+  }
+
+  // ✅ NEW METHOD: Add item to cart
+  static Future<bool> addToCart(dynamic product, int quantity) async {
+    final token = await LocalStorage.getAuthToken();
+    if (token == null || token.isEmpty) throw UnauthorizedException();
+
+    final url = Uri.parse(ApiEndpoints.addToCart);
+    final response = await http.post(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+      body: {
+        'product_id': product.id.toString(),
+        'quantity': quantity.toString(),
+      },
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    }
+
+    if (response.statusCode == 401) throw UnauthorizedException();
+    throw Exception('Failed to add product to cart');
   }
 }
